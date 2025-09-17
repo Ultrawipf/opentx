@@ -196,12 +196,10 @@ void init_ppm(uint32_t module_index);
 void disable_ppm(uint32_t module_index);
 void init_pxx(uint32_t module_index);
 void disable_pxx(uint32_t module_index);
-void init_dsm2(uint32_t module_index);
-void disable_dsm2(uint32_t module_index);
+void init_serial(uint32_t module_index, uint32_t baudrate, uint32_t period_half_us);
+void disable_serial(uint32_t module_index);
 void init_crossfire(uint32_t module_index);
 void disable_crossfire(uint32_t module_index);
-void init_sbusOut(uint32_t module_index);
-void disable_sbusOut(uint32_t module_index);
 
 // Trainer driver
 void init_trainer_ppm(void);
@@ -241,6 +239,9 @@ enum EnumKeys
 
   NUM_KEYS
 };
+
+#define IS_SHIFT_KEY(index)             (false)
+#define IS_SHIFT_PRESSED()              (false)
 
 enum EnumSwitches
 {
@@ -287,13 +288,17 @@ void keysInit(void);
 uint8_t keyState(uint8_t index);
 uint32_t switchState(uint8_t index);
 uint32_t readKeys(void);
+#define KEYS_PRESSED()                          (readKeys())
+#define DBLKEYS_PRESSED_RGT_LFT(in)             ((in & ((1<<KEY_RIGHT) + (1<<KEY_LEFT))) == ((1<<KEY_RIGHT) + (1<<KEY_LEFT)))
+#define DBLKEYS_PRESSED_UP_DWN(in)              ((in & ((1<<KEY_UP) + (1<<KEY_DOWN))) == ((1<<KEY_UP) + (1<<KEY_DOWN)))
+#define DBLKEYS_PRESSED_RGT_UP(in)              ((in & ((1<<KEY_RIGHT) + (1<<KEY_UP))) == ((1<<KEY_RIGHT) + (1<<KEY_UP)))
+#define DBLKEYS_PRESSED_LFT_DWN(in)             ((in & ((1<<KEY_LEFT) + (1<<KEY_DOWN))) == ((1<<KEY_LEFT) + (1<<KEY_DOWN)))
+
+// Trims driver
+#define NUM_TRIMS                               6
+#define NUM_TRIMS_KEYS                          (NUM_TRIMS * 2)
 uint32_t readTrims(void);
-#define TRIMS_PRESSED()                (readTrims())
-#define KEYS_PRESSED()                 (readKeys())
-#define DBLKEYS_PRESSED_RGT_LFT(in)    ((in & ((1<<KEY_RIGHT) + (1<<KEY_LEFT))) == ((1<<KEY_RIGHT) + (1<<KEY_LEFT)))
-#define DBLKEYS_PRESSED_UP_DWN(in)     ((in & ((1<<KEY_UP) + (1<<KEY_DOWN))) == ((1<<KEY_UP) + (1<<KEY_DOWN)))
-#define DBLKEYS_PRESSED_RGT_UP(in)     ((in & ((1<<KEY_RIGHT) + (1<<KEY_UP))) == ((1<<KEY_RIGHT) + (1<<KEY_UP)))
-#define DBLKEYS_PRESSED_LFT_DWN(in)    ((in & ((1<<KEY_LEFT) + (1<<KEY_DOWN))) == ((1<<KEY_LEFT) + (1<<KEY_DOWN)))
+#define TRIMS_PRESSED()                         (readTrims())
 
 // Rotary encoder driver
 #define ROTARY_ENCODER_NAVIGATION
@@ -334,10 +339,10 @@ void watchdogInit(unsigned int duration);
 #define NUM_XPOTS                      NUM_POTS
 #if defined(PCBX10)
   #define NUM_SLIDERS                  2
-  #define NUM_PWMANALOGS               4
+  #define NUM_PWMSTICKS                4
 #else
   #define NUM_SLIDERS                  4
-  #define NUM_PWMANALOGS               0
+  #define NUM_PWMSTICKS                0
 #endif
 enum Analogs {
   STICK1,
@@ -396,15 +401,34 @@ extern uint16_t adcValues[NUM_ANALOGS];
 void adcInit(void);
 void adcRead(void);
 uint16_t getAnalogValue(uint8_t index);
-uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
-#if NUM_PWMANALOGS > 0
-extern uint8_t analogs_pwm_disabled;
-#define ANALOGS_PWM_ENABLED()          (analogs_pwm_disabled == false)
-void analogPwmInit(void);
-void analogPwmRead(uint16_t * values);
-void analogPwmCheck();
+#define NUM_MOUSE_ANALOGS              2
+#if defined(PCBX10)
+  #define NUM_DUMMY_ANAS               2
+#else
+  #define NUM_DUMMY_ANAS               0
+#endif
+
+#if NUM_PWMSTICKS > 0
+extern bool sticks_pwm_disabled;
+#define STICKS_PWM_ENABLED()          (sticks_pwm_disabled == false)
+void sticksPwmInit(void);
+void sticksPwmRead(uint16_t * values);
 extern volatile uint32_t pwm_interrupt_count;
 #endif
+
+// Battery driver
+#if defined(PCBX10)
+  // Lipo 2S
+  #define BATTERY_WARN      66 // 6.6V
+  #define BATTERY_MIN       67 // 6.7V
+  #define BATTERY_MAX       83 // 8.3V
+#else
+  // NI-MH 9.6V
+  #define BATTERY_WARN      87 // 8.7V
+  #define BATTERY_MIN       85 // 8.5V
+  #define BATTERY_MAX       115 // 11.5V
+#endif
+uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
 
 #if defined(__cplusplus) && !defined(SIMU)
 extern "C" {
@@ -516,8 +540,8 @@ void sportUpdatePowerOff(void);
 #define SPORT_UPDATE_POWER_ON()        sportUpdatePowerOn()
 #define SPORT_UPDATE_POWER_OFF()       sportUpdatePowerOff()
 #else
-#define SPORT_UPDATE_POWER_ON()        EXTERNAL_MODULE_ON()
-#define SPORT_UPDATE_POWER_OFF()       EXTERNAL_MODULE_OFF()
+#define SPORT_UPDATE_POWER_ON()
+#define SPORT_UPDATE_POWER_OFF()
 #endif
 
 // Haptic driver

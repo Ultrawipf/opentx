@@ -33,6 +33,8 @@
   #include "lua/lua_exports_x9e.inc"
 #elif defined(PCBX7)
   #include "lua/lua_exports_x7.inc"
+#elif defined(PCBXLITE)
+  #include "lua/lua_exports_xlite.inc"
 #elif defined(PCBTARANIS)
   #include "lua/lua_exports_x9d.inc"
 #endif
@@ -299,7 +301,10 @@ bool luaFindFieldByName(const char * name, LuaField & field, unsigned int flags)
         continue;
       }
       if (index < luaMultipleFields[n].count) {
-        field.id = luaMultipleFields[n].id + index;
+        if(luaMultipleFields[n].id == MIXSRC_FIRST_TELEM)
+          field.id = luaMultipleFields[n].id + index*3;
+        else
+          field.id = luaMultipleFields[n].id + index;
         if (flags & FIND_FIELD_DESC) {
           snprintf(field.desc, sizeof(field.desc)-1, luaMultipleFields[n].desc, index+1);
           field.desc[sizeof(field.desc)-1] = '\0';
@@ -525,7 +530,7 @@ The list of valid sources is available:
 |----------------|-------|
 | 2.0 | [all](http://downloads-20.open-tx.org/firmware/lua_fields.txt) |
 | 2.1 | [X9D and X9D+](http://downloads-21.open-tx.org/firmware/lua_fields_taranis.txt), [X9E](http://downloads-21.open-tx.org/firmware/lua_fields_taranis_x9e.txt) |
-| 2.2 | [X9D and X9D+](http://downloads.open-tx.org/2.2/firmware/lua_fields_x9d.txt), [X9E](http://downloads.open-tx.org/2.2/firmware/lua_fields_x9e.txt), [Horus](http://downloads.open-tx.org/2.2/firmware/lua_fields_x12s.txt) |
+| 2.2 | [X9D and X9D+](http://downloads.open-tx.org/2.2/release/firmware/lua_fields_x9d.txt), [X9E](http://downloads.open-tx.org/2.2/release/firmware/lua_fields_x9e.txt), [Horus](http://downloads.open-tx.org/2.2/release/firmware/lua_fields_x12s.txt) |
 
 @param name (string) name of the field
 
@@ -572,7 +577,7 @@ The list of fixed sources:
 |----------------|-------|
 | 2.0 | [all](http://downloads-20.open-tx.org/firmware/lua_fields.txt) |
 | 2.1 | [X9D and X9D+](http://downloads-21.open-tx.org/firmware/lua_fields_taranis.txt), [X9E](http://downloads-21.open-tx.org/firmware/lua_fields_taranis_x9e.txt) |
-| 2.2 | [X9D and X9D+](http://downloads.open-tx.org/2.2/firmware/lua_fields_x9d.txt), [X9E](http://downloads.open-tx.org/2.2/firmware/lua_fields_x9e.txt), [Horus](http://downloads.open-tx.org/2.2/firmware/lua_fields_x12s.txt) |
+| 2.2 | [X9D and X9D+](http://downloads.open-tx.org/2.2/release/firmware/lua_fields_x9d.txt), [X9E](http://downloads.open-tx.org/2.2/release/firmware/lua_fields_x9e.txt), [Horus](http://downloads.open-tx.org/2.2/release/firmware/lua_fields_x12s.txt) |
 
 
 In OpenTX 2.1.x the telemetry sources no longer have a predefined name.
@@ -1344,12 +1349,14 @@ const luaR_value_entry opentxConstants[] = {
   { "MIXSRC_SB", MIXSRC_SB },
   { "MIXSRC_SC", MIXSRC_SC },
   { "MIXSRC_SD", MIXSRC_SD },
-#if !defined(PCBX7)
+#if !defined(PCBX7) && !defined(PCBXLITE)
   { "MIXSRC_SE", MIXSRC_SE },
   { "MIXSRC_SG", MIXSRC_SG },
 #endif
+#if !defined(PCBXLITE)
   { "MIXSRC_SF", MIXSRC_SF },
   { "MIXSRC_SH", MIXSRC_SH },
+#endif
   { "MIXSRC_CH1", MIXSRC_CH1 },
   { "SWSRC_LAST", SWSRC_LAST_LOGICAL_SWITCH },
 #if defined(COLORLCD)
@@ -1402,6 +1409,29 @@ const luaR_value_entry opentxConstants[] = {
   { "EVT_MODEL_FIRST",  EVT_KEY_FIRST(KEY_MODEL) },
   { "EVT_SYS_FIRST",  EVT_KEY_FIRST(KEY_RADIO) },
   { "EVT_RTN_FIRST",  EVT_KEY_FIRST(KEY_EXIT) },
+#elif defined(PCBXLITE)
+  { "EVT_DOWN_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
+  { "EVT_UP_FIRST", EVT_KEY_FIRST(KEY_UP) },
+  { "EVT_LEFT_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+  { "EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
+  { "EVT_SHIFT_FIRST", EVT_KEY_FIRST(KEY_SHIFT) },
+  { "EVT_DOWN_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+  { "EVT_UP_BREAK", EVT_KEY_BREAK(KEY_UP) },
+  { "EVT_LEFT_BREAK", EVT_KEY_BREAK(KEY_LEFT) },
+  { "EVT_RIGHT_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
+  { "EVT_SHIFT_BREAK", EVT_KEY_BREAK(KEY_SHIFT) },
+  { "EVT_DOWN_LONG", EVT_KEY_LONG(KEY_DOWN) },
+  { "EVT_UP_LONG", EVT_KEY_LONG(KEY_UP) },
+  { "EVT_LEFT_LONG", EVT_KEY_LONG(KEY_LEFT) },
+  { "EVT_RIGHT_LONG", EVT_KEY_LONG(KEY_RIGHT) },
+  { "EVT_SHIFT_LONG", EVT_KEY_LONG(KEY_SHIFT) },
+  { "EVT_DOWN_REPT", EVT_KEY_REPT(KEY_DOWN) },
+  { "EVT_UP_REPT", EVT_KEY_REPT(KEY_UP) },
+  { "EVT_LEFT_REPT", EVT_KEY_REPT(KEY_LEFT) },
+  { "EVT_RIGHT_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+  { "FORCE", FORCE },
+  { "ERASE", ERASE },
+  { "ROUND", ROUND },
 #elif defined(PCBTARANIS)
   { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
   { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },

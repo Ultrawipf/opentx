@@ -48,7 +48,7 @@
 #endif
 
 #define GET_PPM_POLARITY(idx)             g_model.moduleData[idx].ppm.pulsePol
-#define GET_SBUS_POLARITY(idx)             g_model.moduleData[idx].sbus.noninverted
+#define GET_SBUS_POLARITY(idx)            g_model.moduleData[idx].sbus.noninverted
 #define GET_PPM_DELAY(idx)                (g_model.moduleData[idx].ppm.delay * 50 + 300)
 #define SET_DEFAULT_PPM_FRAME_LENGTH(idx) g_model.moduleData[idx].ppm.frameLength = 4 * max((int8_t)0, g_model.moduleData[idx].channelsCount)
 
@@ -506,7 +506,10 @@ enum XJTRFProtocols {
 enum R9MSubTypes
 {
   MODULE_SUBTYPE_R9M_FCC,
-  MODULE_SUBTYPE_R9M_LBT,
+  MODULE_SUBTYPE_R9M_EU,
+  MODULE_SUBTYPE_R9M_EUPLUS,
+  MODULE_SUBTYPE_R9M_AUPLUS,
+  MODULE_SUBTYPE_R9M_LAST=MODULE_SUBTYPE_R9M_AUPLUS
 };
 
 enum MultiModuleRFProtocols {
@@ -546,7 +549,22 @@ enum MultiModuleRFProtocols {
   MM_RF_PROTO_CABELL,
   MM_RF_PROTO_ESKY150,
   MM_RF_PROTO_H83D,
-  MM_RF_PROTO_LAST= MM_RF_PROTO_H83D
+  MM_RF_PROTO_CORONA,
+  MM_RF_PROTO_CFLIE,
+  MM_RF_PROTO_HITEC,
+  MM_RF_PROTO_WFLY,
+  MM_RF_PROTO_BUGS,
+  MM_RF_PROTO_BUGS_MINI,
+  MM_RF_PROTO_TRAXXAS,
+  MM_RF_PROTO_NCC1701,
+  MM_RF_PROTO_E01X,
+  MM_RF_PROTO_V911S,
+  MM_RF_PROTO_GD00X,
+  MM_RF_PROTO_V761,
+  MM_RF_PROTO_KF606,
+  MM_RF_PROTO_REDPINE,
+  MM_RF_PROTO_POTENSIC,
+  MM_RF_PROTO_LAST = MM_RF_PROTO_POTENSIC
 };
 
 enum MMDSM2Subtypes {

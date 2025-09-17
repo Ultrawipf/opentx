@@ -373,6 +373,7 @@ void drawStatusLine();
   void menuTextView(event_t event);
   void pushMenuTextView(const char *filename);
   void pushModelNotes();
+  void readModelNotes();
 #endif
 
 #define LABEL(...)                     (uint8_t)-1
@@ -405,7 +406,7 @@ void drawStatusLine();
   #define IS_ROTARY_EVENT(evt)         (0)
   void repeatLastCursorMove(event_t event);
   #define REPEAT_LAST_CURSOR_MOVE()    repeatLastCursorMove(event)
-  #define MOVE_CURSOR_FROM_HERE()      REPEAT_LAST_CURSOR_MOVE()
+  #define MOVE_CURSOR_FROM_HERE()      if (menuHorizontalPosition > 0) REPEAT_LAST_CURSOR_MOVE()
 #endif
 
 // TODO enum

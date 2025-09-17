@@ -86,11 +86,11 @@ GeneralSettings::GeneralSettings()
     vBatMin = -5;   //8,5V
     vBatMax = -5;   //11,5V
   }
-  else if (IS_HORUS_X10(board)) {
-    // Lipo 2V
+  else if (IS_TARANIS_XLITE(board) || IS_HORUS_X10(board)) {
+    // Lipo 2S
     vBatWarn = 66;
-    vBatMin = -28; // 6.2V
-    vBatMax = -38;   // 8.2V
+    vBatMin = -23;  // 6.7V
+    vBatMax = -37;  // 8.3V 
   }
   else if (IS_TARANIS(board)) {
     // NI-MH 7.2V, X9D, X9D+ and X7
@@ -237,7 +237,11 @@ void GeneralSettings::setDefaultControlTypes(Board::Type board)
     potConfig[1] = Board::POT_MULTIPOS_SWITCH;
     potConfig[2] = Board::POT_WITH_DETENT;
   }
-  else if (IS_TARANIS_SMALL(board)) {
+  else if (IS_TARANIS_XLITE(board)) {
+    potConfig[0] = Board::POT_WITHOUT_DETENT;
+    potConfig[1] = Board::POT_WITHOUT_DETENT;
+  }
+  else if (IS_TARANIS_X7(board)) {
     potConfig[0] = Board::POT_WITHOUT_DETENT;
     potConfig[1] = Board::POT_WITH_DETENT;
   }

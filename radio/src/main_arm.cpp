@@ -58,7 +58,7 @@ void handleUsbConnection()
 #endif
       POPUP_MENU_START(onUSBConnectMenu);
     }
-    if (g_eeGeneral.USBMode != USB_UNSELECTED_MODE && g_eeGeneral.USBMode <= USB_MAX_MODE) {
+    if (g_eeGeneral.USBMode != USB_UNSELECTED_MODE) {
       setSelectedUsbMode(g_eeGeneral.USBMode);
     }
   }
@@ -307,8 +307,13 @@ void handleGui(event_t event) {
     // so Lua telemetry script can fully use them
     if (event) {
       uint8_t key = EVT_KEY_MASK(event);
+#if defined(PCBXLITE)
+      // SHIFT + LEFT/RIGHT LONG used to change telemetry screen on XLITE
+      if ((!IS_KEY_LONG(event) && key == KEY_RIGHT && IS_SHIFT_PRESSED()) || (!IS_KEY_LONG(event) && key == KEY_LEFT  && IS_SHIFT_PRESSED()) || (!IS_KEY_LONG(event) && key == KEY_EXIT)) {
+#else
       // no need to filter out MENU and ENT(short), because they are not used by menuViewTelemetryFrsky()
       if (key == KEY_PLUS || key == KEY_MINUS || (!IS_KEY_LONG(event) && key == KEY_EXIT)) {
+#endif
         // TRACE("Telemetry script event 0x%02x killed", event);
         event = 0;
       }
@@ -414,12 +419,10 @@ void perMain()
     mainRequestFlags &= ~(1 << REQUEST_FLIGHT_RESET);
   }
 
-  event_t evt = getEvent(false);
-  if (evt && (g_eeGeneral.backlightMode & e_backlight_mode_keys)) {
-    // on keypress turn the light on
-    backlightOn();
-  }
   doLoopCommonActions();
+
+  event_t evt = getEvent(false);
+
 #if defined(NAVIGATION_STICKS)
   uint8_t sticks_evt = getSticksNavigationEvent();
   if (sticks_evt) {

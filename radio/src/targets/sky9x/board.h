@@ -79,6 +79,9 @@ enum EnumKeys
   NUM_KEYS
 };
 
+#define IS_SHIFT_KEY(index)             (false)
+#define IS_SHIFT_PRESSED()              (false)
+
 enum EnumSwitches
 {
   SW_ID0,
@@ -247,6 +250,8 @@ uint8_t keyState(uint8_t index);
 uint32_t switchState(uint8_t index);
 uint32_t readKeys(void);
 uint32_t readTrims(void);
+#define NUM_TRIMS                      4
+#define NUM_TRIMS_KEYS                 (NUM_TRIMS * 2)
 #define TRIMS_PRESSED()                readTrims()
 #define KEYS_PRESSED()                 readKeys()
 
@@ -257,11 +262,8 @@ void init_ppm(uint32_t port);
 void disable_ppm(uint32_t port);
 void init_pxx(uint32_t port);
 void disable_pxx(uint32_t port);
-void init_dsm2(uint32_t port);
-void disable_dsm2(uint32_t port);
-
-void init_sbusOut(uint32_t module_index);
-void disable_sbusOut(uint32_t module_index);
+void init_serial(uint32_t port, uint32_t baudrate, uint32_t period_half_us);
+void disable_serial(uint32_t port);
 
 // SD driver
 #if defined(SIMU)
@@ -337,8 +339,15 @@ enum CalibratedAnalogs {
 void adcInit();
 void adcRead(void);
 uint16_t getAnalogValue(uint8_t index);
-uint16_t getBatteryVoltage();   // returns current battery voltage in 10mV steps
 void setSticksGain(uint8_t gains);
+#define NUM_MOUSE_ANALOGS              0
+#define NUM_DUMMY_ANAS                 0
+
+// Battery driver
+uint16_t getBatteryVoltage();          // returns current battery voltage in 10mV steps
+#define BATTERY_MIN                    90  // 9V
+#define BATTERY_MAX                    120 // 12V
+#define BATTERY_WARN                   90  // 9V
 
 // Buzzer driver
 void buzzerSound(uint8_t duration);

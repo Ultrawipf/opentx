@@ -84,7 +84,6 @@ enum MenuModelSetupItems {
   ITEM_MODEL_EXTERNAL_MODULE_BIND,
   ITEM_MODEL_EXTERNAL_MODULE_FAILSAFE,
   ITEM_MODEL_EXTERNAL_MODULE_OPTIONS,
-  ITEM_MODEL_EXTERNAL_MODULE_BIND_OPTIONS,
 #if defined(MULTIMODULE)
   ITEM_MODEL_EXTERNAL_MODULE_AUTOBIND,
 #endif
@@ -110,27 +109,7 @@ void onBindMenu(const char * result)
 {
   uint8_t moduleIdx = CURRENT_MODULE_EDITED(menuVerticalPosition);
 
-  if (result == STR_BINDING_25MW_CH1_8_TELEM_OFF) {
-    g_model.moduleData[moduleIdx].pxx.power = R9M_LBT_POWER_25;
-    g_model.moduleData[moduleIdx].pxx.receiver_telem_off = true;
-    g_model.moduleData[moduleIdx].pxx.receiver_channel_9_16 = false;
-  }
-  else if (result == STR_BINDING_25MW_CH1_8_TELEM_ON) {
-    g_model.moduleData[moduleIdx].pxx.power = R9M_LBT_POWER_25;
-    g_model.moduleData[moduleIdx].pxx.receiver_telem_off = false;
-    g_model.moduleData[moduleIdx].pxx.receiver_channel_9_16 = false;
-  }
-  else if (result == STR_BINDING_500MW_CH1_8_TELEM_OFF) {
-    g_model.moduleData[moduleIdx].pxx.power = R9M_LBT_POWER_500;
-    g_model.moduleData[moduleIdx].pxx.receiver_telem_off = true;
-    g_model.moduleData[moduleIdx].pxx.receiver_channel_9_16 = false;
-  }
-  else if (result == STR_BINDING_500MW_CH9_16_TELEM_OFF) {
-    g_model.moduleData[moduleIdx].pxx.power = R9M_LBT_POWER_500;
-    g_model.moduleData[moduleIdx].pxx.receiver_telem_off = true;
-    g_model.moduleData[moduleIdx].pxx.receiver_channel_9_16 = true;
-  }
-  else if (result == STR_BINDING_1_8_TELEM_ON) {
+  if (result == STR_BINDING_1_8_TELEM_ON) {
     g_model.moduleData[moduleIdx].pxx.receiver_telem_off = false;
     g_model.moduleData[moduleIdx].pxx.receiver_channel_9_16 = false;
   }
@@ -299,6 +278,7 @@ void menuModelSetup(event_t event)
   horzpos_t l_posHorz = menuHorizontalPosition;
   bool CURSOR_ON_CELL = (menuHorizontalPosition >= 0);
 
+  int8_t old_editMode = s_editMode;
   MENU_TAB({ 0, 0, TIMERS_ROWS, TOPLCD_ROWS 0, 1, 0, 0,
     LABEL(Throttle), 0, 0, 0,
     LABEL(PreflightCheck), 0, 0, SW_WARN_ITEMS(), POT_WARN_ITEMS(), NAVIGATION_LINE_BY_LINE|(NUM_STICKS+NUM_POTS+NUM_SLIDERS+NUM_ROTARY_ENCODERS-1), 0,
@@ -314,12 +294,15 @@ void menuModelSetup(event_t event)
     ((IS_MODULE_XJT(EXTERNAL_MODULE) && !HAS_RF_PROTOCOL_FAILSAFE(g_model.moduleData[EXTERNAL_MODULE].rfProtocol)) || IS_MODULE_SBUS(EXTERNAL_MODULE)) ? (uint8_t)1 : (IS_MODULE_PPM(EXTERNAL_MODULE) || IS_MODULE_PXX(EXTERNAL_MODULE) || IS_MODULE_DSM2(EXTERNAL_MODULE) || IS_MODULE_MULTIMODULE(EXTERNAL_MODULE)) ? (uint8_t)2 : HIDDEN_ROW,
     FAILSAFE_ROWS(EXTERNAL_MODULE),
     EXTERNAL_MODULE_OPTION_ROW,
-    (IS_MODULE_R9M_LBT(EXTERNAL_MODULE) ? (uint8_t)0 : HIDDEN_ROW),
     MULTIMODULE_MODULE_ROWS
     EXTERNAL_MODULE_POWER_ROW,
     LABEL(Trainer), 0, TRAINER_LINE1_ROWS, TRAINER_LINE2_ROWS});
 
   MENU_CHECK(STR_MENUSETUP, menuTabModel, MENU_MODEL_SETUP, ITEM_MODEL_SETUP_MAX);
+
+  if (event == EVT_ENTRY) {
+    reusableBuffer.modelsetup.r9mPower = g_model.moduleData[EXTERNAL_MODULE].pxx.power;
+  }
 
 #if (defined(DSM2) || defined(PXX))
   if (menuEvent) {
@@ -751,7 +734,7 @@ void menuModelSetup(event_t event)
         else if (IS_MODULE_DSM2(EXTERNAL_MODULE))
           lcdDrawTextAtIndex(MODEL_SETUP_3RD_COLUMN, y, STR_DSM_PROTOCOLS, g_model.moduleData[EXTERNAL_MODULE].rfProtocol, menuHorizontalPosition==1 ? attr : 0);
         else if (IS_MODULE_R9M(EXTERNAL_MODULE))
-          lcdDrawTextAtIndex(MODEL_SETUP_3RD_COLUMN, y, STR_R9M_MODES, g_model.moduleData[EXTERNAL_MODULE].subType, (menuHorizontalPosition==1 ? attr : 0));
+          lcdDrawTextAtIndex(MODEL_SETUP_3RD_COLUMN, y, STR_R9M_REGION, g_model.moduleData[EXTERNAL_MODULE].subType, (menuHorizontalPosition==1 ? attr : 0));
 #if defined(MULTIMODULE)
         else if (IS_MODULE_MULTIMODULE(EXTERNAL_MODULE)) {
           uint8_t multi_rfProto = g_model.moduleData[EXTERNAL_MODULE].getMultiProtocol(false);
@@ -781,13 +764,22 @@ void menuModelSetup(event_t event)
                 g_model.moduleData[EXTERNAL_MODULE].channelsCount = DEFAULT_CHANNELS(EXTERNAL_MODULE);
                 if (IS_MODULE_SBUS(EXTERNAL_MODULE))
                   g_model.moduleData[EXTERNAL_MODULE].sbus.refreshRate = -31;
+                if(IS_MODULE_PPM(EXTERNAL_MODULE))
+                  SET_DEFAULT_PPM_FRAME_LENGTH(EXTERNAL_MODULE);
               }
               break;
             case 1:
               if (IS_MODULE_DSM2(EXTERNAL_MODULE))
                 CHECK_INCDEC_MODELVAR(event, g_model.moduleData[EXTERNAL_MODULE].rfProtocol, DSM2_PROTO_LP45, DSM2_PROTO_DSMX);
-              else if (IS_MODULE_R9M(EXTERNAL_MODULE))
-                CHECK_INCDEC_MODELVAR(event, g_model.moduleData[EXTERNAL_MODULE].subType, MODULE_SUBTYPE_R9M_FCC, MODULE_SUBTYPE_R9M_LBT);
+              else if (IS_MODULE_R9M(EXTERNAL_MODULE)) {
+                uint8_t newR9MType = checkIncDec(event, g_model.moduleData[EXTERNAL_MODULE].subType, MODULE_SUBTYPE_R9M_FCC, MODULE_SUBTYPE_R9M_LAST, EE_MODEL, isR9MModeAvailable);
+                if (newR9MType != g_model.moduleData[EXTERNAL_MODULE].subType && newR9MType > MODULE_SUBTYPE_R9M_EU) {
+                  POPUP_WARNING(STR_R9MFLEXWARN1);
+                  const char * w = STR_R9MFLEXWARN2;
+                  SET_WARNING_INFO(w, strlen(w), 0);
+                }
+                g_model.moduleData[EXTERNAL_MODULE].subType = newR9MType;
+              }
 #if defined(MULTIMODULE)
               else if (IS_MODULE_MULTIMODULE(EXTERNAL_MODULE)) {
                 int multiRfProto = g_model.moduleData[EXTERNAL_MODULE].multi.customProto == 1 ? MM_RF_PROTO_CUSTOM : g_model.moduleData[EXTERNAL_MODULE].getMultiProtocol(false);
@@ -990,9 +982,14 @@ void menuModelSetup(event_t event)
                 if (checkIncDec_Ret) {
                   modelHeaders[g_eeGeneral.currModel].modelId[moduleIdx] = g_model.header.modelId[moduleIdx];
                 }
-              }
-              if (s_editMode==0 && event==EVT_KEY_BREAK(KEY_ENTER)) {
-                checkModelIdUnique(g_eeGeneral.currModel, moduleIdx);
+                else if (event == EVT_KEY_LONG(KEY_ENTER)) {
+                  killEvents(event);
+                  uint8_t newVal = findNextUnusedModelId(g_eeGeneral.currModel, moduleIdx);
+                  if (newVal != g_model.header.modelId[moduleIdx]) {
+                    modelHeaders[g_eeGeneral.currModel].modelId[moduleIdx] = g_model.header.modelId[moduleIdx] = newVal;
+                    storageDirty(EE_MODEL);
+                  }
+                }
               }
             }
             lcdDrawText(MODEL_SETUP_2ND_COLUMN+xOffsetBind, y, STR_MODULE_BIND, l_posHorz==1 ? attr : 0);
@@ -1009,20 +1006,21 @@ void menuModelSetup(event_t event)
                 if (l_posHorz == 1) {
                   if (IS_MODULE_R9M(moduleIdx) || (IS_MODULE_XJT(moduleIdx) && g_model.moduleData[moduleIdx].rfProtocol== RF_PROTO_X16)) {
                     if (event == EVT_KEY_BREAK(KEY_ENTER)) {
-                      uint8_t default_selection;
+                      uint8_t default_selection = 0; // R9M_LBT should default to 0 as available options are variables
                       if (IS_MODULE_R9M_LBT(moduleIdx)) {
-                        if (!IS_TELEMETRY_INTERNAL_MODULE())
-                          POPUP_MENU_ADD_ITEM(STR_BINDING_25MW_CH1_8_TELEM_ON);
-                        POPUP_MENU_ADD_ITEM(STR_BINDING_25MW_CH1_8_TELEM_OFF);
-                        POPUP_MENU_ADD_ITEM(STR_BINDING_500MW_CH1_8_TELEM_OFF);
-                        POPUP_MENU_ADD_ITEM(STR_BINDING_500MW_CH9_16_TELEM_OFF);
-                        default_selection = 1;
-                      }
-                      else {
-                        if (!(IS_TELEMETRY_INTERNAL_MODULE() && moduleIdx == EXTERNAL_MODULE))
+                        if (BIND_TELEM_ALLOWED(moduleIdx))
                           POPUP_MENU_ADD_ITEM(STR_BINDING_1_8_TELEM_ON);
                         POPUP_MENU_ADD_ITEM(STR_BINDING_1_8_TELEM_OFF);
-                        if (!(IS_TELEMETRY_INTERNAL_MODULE() && moduleIdx == EXTERNAL_MODULE))
+                        if (BIND_TELEM_ALLOWED(moduleIdx) && BIND_CH9TO16_ALLOWED(moduleIdx))
+                         POPUP_MENU_ADD_ITEM(STR_BINDING_9_16_TELEM_ON);
+                        if (BIND_CH9TO16_ALLOWED(moduleIdx))
+                          POPUP_MENU_ADD_ITEM(STR_BINDING_9_16_TELEM_OFF);
+                      }
+                      else {
+                        if (BIND_TELEM_ALLOWED(moduleIdx))
+                          POPUP_MENU_ADD_ITEM(STR_BINDING_1_8_TELEM_ON);
+                        POPUP_MENU_ADD_ITEM(STR_BINDING_1_8_TELEM_OFF);
+                        if (BIND_TELEM_ALLOWED(moduleIdx))
                           POPUP_MENU_ADD_ITEM(STR_BINDING_9_16_TELEM_ON);
                         POPUP_MENU_ADD_ITEM(STR_BINDING_9_16_TELEM_OFF);
                         default_selection = g_model.moduleData[moduleIdx].pxx.receiver_telem_off + (g_model.moduleData[moduleIdx].pxx.receiver_channel_9_16 << 1);
@@ -1079,9 +1077,18 @@ void menuModelSetup(event_t event)
           }
           else if (menuHorizontalPosition == 1) {
             s_editMode = 0;
-            if (moduleData.failsafeMode==FAILSAFE_CUSTOM && event==EVT_KEY_FIRST(KEY_ENTER)) {
-              g_moduleIdx = moduleIdx;
-              pushMenu(menuModelFailsafe);
+            if (moduleData.failsafeMode == FAILSAFE_CUSTOM) {
+              if (event == EVT_KEY_LONG(KEY_ENTER)) {
+                killEvents(event);
+                setCustomFailsafe(moduleIdx);
+                storageDirty(EE_MODEL);
+                AUDIO_WARNING1();
+                SEND_FAILSAFE_NOW(moduleIdx);
+              }
+              else if (event == EVT_KEY_BREAK(KEY_ENTER)) {
+                g_moduleIdx = moduleIdx;
+                pushMenu(menuModelFailsafe);
+              }
             }
           }
           else {
@@ -1138,35 +1145,26 @@ void menuModelSetup(event_t event)
      }
      break;
 
-     case ITEM_MODEL_EXTERNAL_MODULE_BIND_OPTIONS:
-     {
-       uint8_t moduleIdx = CURRENT_MODULE_EDITED(k);
-
-       lcdDrawTextAlignedLeft(y, "Bind mode");
-       if (g_model.moduleData[moduleIdx].pxx.power == R9M_LBT_POWER_25) {
-         if(g_model.moduleData[moduleIdx].pxx.receiver_telem_off == true)
-           lcdDrawText(MODEL_SETUP_2ND_COLUMN, y, STR_BINDING_25MW_CH1_8_TELEM_OFF);
-         else
-           lcdDrawText(MODEL_SETUP_2ND_COLUMN, y, STR_BINDING_25MW_CH1_8_TELEM_ON);
-       }
-       else {
-         if(g_model.moduleData[moduleIdx].pxx.receiver_channel_9_16 == true)
-           lcdDrawText(MODEL_SETUP_2ND_COLUMN, y, STR_BINDING_500MW_CH9_16_TELEM_OFF);
-         else
-           lcdDrawText(MODEL_SETUP_2ND_COLUMN, y, STR_BINDING_500MW_CH1_8_TELEM_OFF);
-       }
-       if (attr) REPEAT_LAST_CURSOR_MOVE();
-     }
-
     case  ITEM_MODEL_EXTERNAL_MODULE_POWER:
     {
       uint8_t moduleIdx = CURRENT_MODULE_EDITED(k);
-      if (IS_MODULE_R9M_FCC(moduleIdx)) {
-        // Power selection is only available on R9M FCC
+      if (IS_MODULE_R9M(moduleIdx)) {
         lcdDrawTextAlignedLeft(y, TR_MULTI_RFPOWER);
-        lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, STR_R9M_FCC_POWER_VALUES, g_model.moduleData[moduleIdx].pxx.power, LEFT | attr);
-        if (attr)
-          CHECK_INCDEC_MODELVAR(event, g_model.moduleData[moduleIdx].pxx.power, 0, R9M_FCC_POWER_MAX);
+        if(IS_MODULE_R9M_FCC_VARIANT(moduleIdx)) {
+          lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, STR_R9M_FCC_POWER_VALUES, g_model.moduleData[moduleIdx].pxx.power, LEFT | attr);
+          if (attr)
+            CHECK_INCDEC_MODELVAR(event, g_model.moduleData[moduleIdx].pxx.power, 0, R9M_FCC_POWER_MAX);
+        }
+        else {
+          lcdDrawTextAtIndex(MODEL_SETUP_2ND_COLUMN, y, STR_R9M_LBT_POWER_VALUES, g_model.moduleData[moduleIdx].pxx.power, LEFT | attr);
+          if (attr)
+            CHECK_INCDEC_MODELVAR(event, g_model.moduleData[moduleIdx].pxx.power, 0, R9M_LBT_POWER_MAX);
+          if (attr && s_editMode == 0 && reusableBuffer.modelsetup.r9mPower != g_model.moduleData[moduleIdx].pxx.power) {
+            if((reusableBuffer.modelsetup.r9mPower + g_model.moduleData[moduleIdx].pxx.power) < 5)  //switching between mode 2 and 3 does not require rebind
+              POPUP_WARNING(STR_REBIND);
+            reusableBuffer.modelsetup.r9mPower = g_model.moduleData[moduleIdx].pxx.power;
+          }
+        }
       }
 #if defined (MULTIMODULE)
       else if (IS_MODULE_MULTIMODULE(moduleIdx)) {
@@ -1210,6 +1208,20 @@ void menuModelSetup(event_t event)
     lcdDrawNumber(16+4*FW, 5*FH, TELEMETRY_RSSI(), BOLD);
   }
 #endif
+
+  if (old_editMode > 0 && s_editMode == 0) {
+    switch(menuVerticalPosition) {
+    case ITEM_MODEL_INTERNAL_MODULE_BIND:
+      if (menuHorizontalPosition == 0)
+        checkModelIdUnique(g_eeGeneral.currModel, INTERNAL_MODULE);
+      break;
+
+    case ITEM_MODEL_EXTERNAL_MODULE_BIND:
+      if (menuHorizontalPosition == 0)
+        checkModelIdUnique(g_eeGeneral.currModel, EXTERNAL_MODULE);
+      break;
+    }
+  }
 }
 
 void menuModelFailsafe(event_t event)
@@ -1219,7 +1231,6 @@ void menuModelFailsafe(event_t event)
   const coord_t barH = (LCD_H - FH) / 8 - 1;
   const int lim = (g_model.extendedLimits ? (512 * LIMIT_EXT_PERCENT / 100) : 512) * 2;
   const uint8_t channelStart = g_model.moduleData[g_moduleIdx].channelsStart;
-  uint8_t ch = 0;
   uint8_t cols = 1;
   uint8_t colW = LCD_W;
 
@@ -1231,35 +1242,45 @@ void menuModelFailsafe(event_t event)
   if (event == EVT_KEY_LONG(KEY_ENTER)) {
     killEvents(event);
     event = 0;
-    if (s_editMode) {
-      g_model.moduleData[g_moduleIdx].failsafeChannels[menuVerticalPosition] = channelOutputs[menuVerticalPosition+channelStart];
-      storageDirty(EE_MODEL);
-      AUDIO_WARNING1();
-      s_editMode = 0;
-      SEND_FAILSAFE_NOW(g_moduleIdx);
+
+    if (menuVerticalPosition < NUM_CHANNELS(g_moduleIdx)) {
+      if (s_editMode) {
+        g_model.moduleData[g_moduleIdx].failsafeChannels[menuVerticalPosition] = channelOutputs[menuVerticalPosition+channelStart];
+        s_editMode = 0;
+      }
+      else {
+        int16_t & failsafe = g_model.moduleData[g_moduleIdx].failsafeChannels[menuVerticalPosition];
+        if (failsafe < FAILSAFE_CHANNEL_HOLD)
+          failsafe = FAILSAFE_CHANNEL_HOLD;
+        else if (failsafe == FAILSAFE_CHANNEL_HOLD)
+          failsafe = FAILSAFE_CHANNEL_NOPULSE;
+        else
+          failsafe = 0;
+      }
     }
     else {
-      int16_t & failsafe = g_model.moduleData[g_moduleIdx].failsafeChannels[menuVerticalPosition];
-      if (failsafe < FAILSAFE_CHANNEL_HOLD)
-        failsafe = FAILSAFE_CHANNEL_HOLD;
-      else if (failsafe == FAILSAFE_CHANNEL_HOLD)
-        failsafe = FAILSAFE_CHANNEL_NOPULSE;
-      else
-        failsafe = 0;
-      storageDirty(EE_MODEL);
-      AUDIO_WARNING1();
-      SEND_FAILSAFE_NOW(g_moduleIdx);
+      // "Outputs => Failsafe" menu item
+      setCustomFailsafe(g_moduleIdx);
     }
+
+    storageDirty(EE_MODEL);
+    AUDIO_WARNING1();
+    SEND_FAILSAFE_NOW(g_moduleIdx);
   }
 
-  SIMPLE_SUBMENU_NOTITLE(NUM_CHANNELS(g_moduleIdx));
+  SIMPLE_SUBMENU_NOTITLE(NUM_CHANNELS(g_moduleIdx)+1);
   SET_SCROLLBAR_X(0);
 
   if (NUM_CHANNELS(g_moduleIdx) > 8) {
     cols = 2;
     colW = LCD_W / cols - 1;
     // Column separator
-    lcdDrawSolidVerticalLine(colW, FH, LCD_H - FH);
+    if (menuVerticalPosition >= NUM_CHANNELS(g_moduleIdx)) {
+      lcdDrawSolidVerticalLine(colW, FH, LCD_H - (FH*2 + FH/2 + 2));
+    }
+    else {
+      lcdDrawSolidVerticalLine(colW, FH, LCD_H - FH);
+    }
   }
 
   lcdDrawTextAlignedCenter(0, FAILSAFESET);
@@ -1269,7 +1290,10 @@ void menuModelFailsafe(event_t event)
   for (uint8_t col = 0; col < cols; col++) {
 
     coord_t y = FH + 1;
-    for (uint8_t line = 0; line < 8; line++) {
+    uint8_t line = (menuVerticalPosition >= NUM_CHANNELS(g_moduleIdx) ? 2 : 0);
+    uint8_t ch = line + col*8;
+
+    for (; line < 8; line++) {
       const int32_t channelValue = channelOutputs[ch+channelStart];
       int32_t failsafeValue = g_model.moduleData[g_moduleIdx].failsafeChannels[8*col+line];
       uint8_t lenLabel = ZLEN(g_model.limitData[ch+channelStart].name);
@@ -1347,4 +1371,9 @@ void menuModelFailsafe(event_t event)
     x += colW + 2;
 
   }  // columns
+
+  if (menuVerticalPosition >= NUM_CHANNELS(g_moduleIdx)) {
+    // Outputs => Failsafe
+    lcdDrawText(CENTER_OFS, LCD_H - (FH + 1), STR_OUTPUTS2FAILSAFE, INVERS);
+  }
 }

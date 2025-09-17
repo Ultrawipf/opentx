@@ -21,7 +21,11 @@
 #ifndef _SDCARD_H_
 #define _SDCARD_H_
 
+#if !defined(SIMU)
 #include "ff.h"
+#endif
+
+#include "opentx.h"
 
 #define ROOT_PATH           "/"
 #define MODELS_PATH         ROOT_PATH "MODELS"      // no trailing slash = important

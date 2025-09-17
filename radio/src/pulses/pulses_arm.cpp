@@ -136,7 +136,7 @@ void setupPulses(uint8_t port)
       case PROTO_DSM2_LP45:
       case PROTO_DSM2_DSM2:
       case PROTO_DSM2_DSMX:
-        disable_dsm2(port);
+        disable_serial(port);
         break;
 #endif
 
@@ -150,7 +150,7 @@ void setupPulses(uint8_t port)
       case PROTO_MULTIMODULE:
 #endif
       case PROTO_SBUS:
-        disable_sbusOut(port);
+        disable_serial(port);
         break;
 
       case PROTO_PPM:
@@ -168,11 +168,12 @@ void setupPulses(uint8_t port)
   switch (required_protocol) {
     case PROTO_PXX:
       setupPulsesPXX(port);
-      scheduleNextMixerCalculation(port, 9);
+      scheduleNextMixerCalculation(port, PXX_PERIOD);
       break;
+
     case PROTO_SBUS:
       setupPulsesSbus(port);
-      scheduleNextMixerCalculation(port, (45+g_model.moduleData[port].sbus.refreshRate)/2);
+      scheduleNextMixerCalculation(port, SBUS_PERIOD);
       break;
 
 #if defined(DSM2)
@@ -180,7 +181,7 @@ void setupPulses(uint8_t port)
     case PROTO_DSM2_DSM2:
     case PROTO_DSM2_DSMX:
       setupPulsesDSM2(port);
-      scheduleNextMixerCalculation(port, 11);
+      scheduleNextMixerCalculation(port, DSM2_PERIOD);
       break;
 #endif
 
@@ -203,14 +204,14 @@ void setupPulses(uint8_t port)
         }
         sportSendBuffer(crossfire, len);
       }
-      scheduleNextMixerCalculation(port, CROSSFIRE_FRAME_PERIOD);
+      scheduleNextMixerCalculation(port, CROSSFIRE_PERIOD);
       break;
 #endif
 
 #if defined(MULTIMODULE)
     case PROTO_MULTIMODULE:
       setupPulsesMultimodule(port);
-      scheduleNextMixerCalculation(port, 4);
+      scheduleNextMixerCalculation(port, MULTIMODULE_PERIOD);
       break;
 #endif
 
@@ -219,7 +220,7 @@ void setupPulses(uint8_t port)
     case PROTO_NONE:
 #endif
       setupPulsesPPMModule(port);
-      scheduleNextMixerCalculation(port, (45+g_model.moduleData[port].ppm.frameLength)/2);
+      scheduleNextMixerCalculation(port, PPM_PERIOD(port));
       break;
 
     default:
@@ -236,7 +237,7 @@ void setupPulses(uint8_t port)
       case PROTO_DSM2_LP45:
       case PROTO_DSM2_DSM2:
       case PROTO_DSM2_DSMX:
-        init_dsm2(port);
+        init_serial(port, DSM2_BAUDRATE, DSM2_PERIOD * 2000);
         break;
 #endif
 
@@ -248,11 +249,13 @@ void setupPulses(uint8_t port)
 
 #if defined(MULTIMODULE)
       case PROTO_MULTIMODULE:
-#endif
-      case PROTO_SBUS:
-        init_sbusOut(port);
+        init_serial(port, MULTIMODULE_BAUDRATE, MULTIMODULE_PERIOD * 2000);
         break;
+#endif
 
+      case PROTO_SBUS:
+        init_serial(port, SBUS_BAUDRATE, SBUS_PERIOD_HALF_US);
+        break;
 
       case PROTO_PPM:
         init_ppm(port);
@@ -261,6 +264,20 @@ void setupPulses(uint8_t port)
       default:
         init_no_pulses(port);
         break;
+    }
+  }
+}
+
+void setCustomFailsafe(uint8_t moduleIndex)
+{
+  if (moduleIndex < NUM_MODULES) {
+    for (int ch=0; ch<MAX_OUTPUT_CHANNELS; ch++) {
+      if (ch < g_model.moduleData[moduleIndex].channelsStart || ch >= NUM_CHANNELS(moduleIndex) + g_model.moduleData[moduleIndex].channelsStart) {
+        g_model.moduleData[moduleIndex].failsafeChannels[ch] = 0;
+      }
+      else if (g_model.moduleData[moduleIndex].failsafeChannels[ch] < FAILSAFE_CHANNEL_HOLD) {
+        g_model.moduleData[moduleIndex].failsafeChannels[ch] = channelOutputs[ch];
+      }
     }
   }
 }

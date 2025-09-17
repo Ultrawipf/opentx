@@ -192,6 +192,8 @@ void writeHeader()
   }
 #if defined(PCBX7)
   #define STR_SWITCHES_LOG_HEADER  "SA,SB,SC,SD,SF,SH"
+#elif defined(PCBXLITE)
+  #define STR_SWITCHES_LOG_HEADER  "SA,SB,SC,SD"
 #else
   #define STR_SWITCHES_LOG_HEADER  "SA,SB,SC,SD,SE,SF,SG,SH"
 #endif
@@ -308,9 +310,11 @@ void logsWrite()
             if (sensor.unit == UNIT_GPS) {
               if (telemetryItem.gps.longitude && telemetryItem.gps.latitude) {
                 div_t qr = div((int)telemetryItem.gps.latitude, 1000000);
-                f_printf(&g_oLogFile, "%d.%06d ", qr.quot, abs(qr.rem));
+                if (telemetryItem.gps.latitude < 0) f_printf(&g_oLogFile, "-");
+                f_printf(&g_oLogFile, "%d.%06d ", abs(qr.quot), abs(qr.rem));
                 qr = div((int)telemetryItem.gps.longitude, 1000000);
-                f_printf(&g_oLogFile, "%d.%06d,", qr.quot, abs(qr.rem));
+                if (telemetryItem.gps.longitude < 0) f_printf(&g_oLogFile, "-");
+                f_printf(&g_oLogFile, "%d.%06d,", abs(qr.quot), abs(qr.rem));
               }
               else {
                 f_printf(&g_oLogFile, ",");
@@ -342,10 +346,13 @@ void logsWrite()
         f_printf(&g_oLogFile, "%d,", calibratedAnalogs[i]);
       }
 
+// TODO: use hardware config to populate
 #if defined(PCBXLITE)
-      f_printf(&g_oLogFile, "%d,%d,0x%08X%08X,",
+      f_printf(&g_oLogFile, "%d,%d,%d,%d,0x%08X%08X,",
           GET_3POS_STATE(SA),
           GET_3POS_STATE(SB),
+          GET_3POS_STATE(SC),
+          GET_3POS_STATE(SD),
           getLogicalSwitchesStates(32),
           getLogicalSwitchesStates(0));
 #elif defined(PCBX7)

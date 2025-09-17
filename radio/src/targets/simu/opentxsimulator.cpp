@@ -280,10 +280,17 @@ void OpenTxSimulator::rotaryEncoderEvent(int steps)
 #else
   // TODO : this should probably be handled in the GUI
   int key;
+#if defined(PCBXLITE)
+  if (steps > 0)
+    key = KEY_DOWN;
+  else if (steps < 0)
+    key = KEY_UP;
+#else
   if (steps > 0)
     key = KEY_MINUS;
   else if (steps < 0)
     key = KEY_PLUS;
+#endif
   else
     // Should not happen but Clang complains that key is unset otherwise
     return;
@@ -473,18 +480,22 @@ void OpenTxSimulator::checkOutputsChanged()
 {
   static TxOutputs lastOutputs;
   static size_t chansDim = DIM(channelOutputs);
+  const static int16_t limit = 512 * 2;
   qint32 tmpVal;
   uint8_t i, idx;
-  uint8_t phase = getFlightMode();  // opentx.cpp
-  uint8_t mode = getStickMode();
+  const uint8_t phase = getFlightMode();  // opentx.cpp
+  const uint8_t mode = getStickMode();
 
   for (i=0; i < chansDim; i++) {
     if (lastOutputs.chans[i] != channelOutputs[i] || m_resetOutputsData) {
-      emit channelOutValueChange(i, channelOutputs[i]);
-      emit channelMixValueChange(i, ex_chans[i]);
+      emit channelOutValueChange(i, channelOutputs[i], (g_model.extendedLimits ? limit * LIMIT_EXT_PERCENT / 100 : limit));
       emit outputValueChange(OUTPUT_SRC_CHAN_OUT, i, channelOutputs[i]);
-      emit outputValueChange(OUTPUT_SRC_CHAN_MIX, i, ex_chans[i]);
       lastOutputs.chans[i] = channelOutputs[i];
+    }
+    if (lastOutputs.ex_chans[i] != ex_chans[i] || m_resetOutputsData) {
+      emit channelMixValueChange(i, ex_chans[i], limit * 2);
+      emit outputValueChange(OUTPUT_SRC_CHAN_MIX, i, ex_chans[i]);
+      lastOutputs.ex_chans[i] = ex_chans[i];
     }
   }
 

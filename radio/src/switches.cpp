@@ -141,10 +141,8 @@ void getSwitchesPosition(bool startup)
   uint64_t newPos = 0;
   CHECK_3POS(0, SW_SA);
   CHECK_3POS(1, SW_SB);
-#if !defined(PCBXLITE)
   CHECK_3POS(2, SW_SC);
   CHECK_3POS(3, SW_SD);
-#endif
 #if !defined(PCBX7) && !defined(PCBXLITE)
   CHECK_3POS(4, SW_SE);
 #endif
@@ -497,7 +495,7 @@ bool getSwitch(swsrc_t swtch)
 #endif
   else if (cs_idx <= SWSRC_LAST_TRIM) {
     uint8_t idx = cs_idx - SWSRC_FIRST_TRIM;
-    idx = (CONVERT_MODE(idx/2) << 1) + (idx & 1);
+    idx = (CONVERT_MODE_TRIMS(idx/2) << 1) + (idx & 1);
     result = trimDown(idx);
   }
 #if ROTARY_ENCODERS > 0
@@ -723,6 +721,7 @@ void checkSwitches()
     }
 
     LED_ERROR_BEGIN();
+    backlightOn();
 
     // first - display warning
 #if defined(PCBTARANIS) || defined(PCBHORUS)
@@ -837,7 +836,7 @@ void checkSwitches()
       last_bad_switches = 0xff;
     }
 #else
-    if (pwrCheck()==e_power_off || keyDown()) break;
+    if (pwrCheck() == e_power_off || keyDown()) break;
 
     doLoopCommonActions();
 
@@ -964,7 +963,6 @@ int16_t lswTimerValue(delayval_t val)
 void logicalSwitchesReset()
 {
 #if defined(CPUARM)
-  flightModeTransitionLast = 255;
   memset(lswFm, 0, sizeof(lswFm));
 #else
   s_last_switch_value = 0;

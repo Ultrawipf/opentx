@@ -125,8 +125,8 @@ options_9x128.update(tts_avr)
 options_gruvin9x = {
     "heli": ("HELI", "YES", "NO"),
     "templates": ("TEMPLATES", "YES", "NO"),
-    "nofp": ("FLIGHT_MODES", "NO", "YES"),
     "nocurves": ("CURVES", "NO", "YES"),
+    "nofp": ("FLIGHT_MODES", "NO", "YES"),
     "sdcard": ("SDCARD", "YES", "NO"),
     "voice": ("VOICE", "YES", "NO"),
     "PXX": ("PXX", "YES", "NO"),
@@ -190,7 +190,6 @@ options_mega2560.update(tts_avr)
 
 options_sky9x = {
     "heli": ("HELI", "YES", "NO"),
-    "nofp": ("FLIGHT_MODES", "NO", "YES"),
     "ppmus": ("PPM_UNIT", "US", "PERCENT_PREC1"),
     "gvars": ("GVARS", "YES", "NO"),
     "potscroll": ("NAVIGATION", "POTS", "NO"),
@@ -206,12 +205,12 @@ options_sky9x = {
     "faimode": ("FAI", "YES", None),
     "faichoice": ("FAI", "CHOICE", None),
     "nooverridech": ("OVERRIDE_CHANNEL_FUNCTION", "NO", "YES"),
-    "multimodule": ("MULTIMODULE", "YES", "NO")
+    "multimodule": ("MULTIMODULE", "YES", "NO"),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
 }
 
 options_ar9x = {
     "heli": ("HELI", "YES", "NO"),
-    "nofp": ("FLIGHT_MODES", "NO", "YES"),
     "ppmus": ("PPM_UNIT", "US", "PERCENT_PREC1"),
     "gvars": ("GVARS", "YES", "NO"),
     "potscroll": ("NAVIGATION", "POTS", "NO"),
@@ -228,7 +227,8 @@ options_ar9x = {
     "faichoice": ("FAI", "CHOICE", None),
     "nooverridech": ("OVERRIDE_CHANNEL_FUNCTION", "NO", "YES"),
     # "rtc": ("RTCLOCK", "YES", "NO"),
-    "multimodule": ("MULTIMODULE", "YES", "NO")
+    "multimodule": ("MULTIMODULE", "YES", "NO"),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
 }
 
 options_taranis = {
@@ -239,14 +239,14 @@ options_taranis = {
     "haptic": ("HAPTIC", "YES", "NO"),
     "nogvars": ("GVARS", "NO", "YES"),
     "sqt5font": ("FONT", "SQT5", None),
-    "noras": ("RAS", "NO", "YES"),
     "faimode": ("FAI", "YES", None),
     "faichoice": ("FAI", "CHOICE", None),
     "nooverridech": ("OVERRIDE_CHANNEL_FUNCTION", "NO", "YES"),
     "internalppm": ("TARANIS_INTERNAL_PPM", "YES", "NO"),
     "shutdownconfirm": ("SHUTDOWN_CONFIRMATION", "YES", "NO"),
     "eu": ("SUPPORT_D16_EU_ONLY", "YES", "NO"),
-    "multimodule": ("MULTIMODULE", "YES", "NO")
+    "multimodule": ("MULTIMODULE", "YES", "NO"),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
 }
 
 options_taranisplus = {
@@ -263,7 +263,25 @@ options_taranisplus = {
     "internalppm": ("TARANIS_INTERNAL_PPM", "YES", "NO"),
     "shutdownconfirm": ("SHUTDOWN_CONFIRMATION", "YES", "NO"),
     "eu": ("SUPPORT_D16_EU_ONLY", "YES", "NO"),
-    "multimodule": ("MULTIMODULE", "YES", "NO")
+    "multimodule": ("MULTIMODULE", "YES", "NO"),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
+}
+
+options_xlite = {
+    "noheli": ("HELI", "NO", "YES"),
+    "ppmus": ("PPM_UNIT", "US", "PERCENT_PREC1"),
+    "lua": ("LUA", "YES", "NO_MODEL_SCRIPTS"),
+    "luac": ("LUA_COMPILER", "YES", "NO"),
+    "nogvars": ("GVARS", "NO", "YES"),
+    "sqt5font": ("FONT", "SQT5", None),
+    "faimode": ("FAI", "YES", None),
+    "faichoice": ("FAI", "CHOICE", None),
+    "nooverridech": ("OVERRIDE_CHANNEL_FUNCTION", "NO", "YES"),
+    "shutdownconfirm": ("SHUTDOWN_CONFIRMATION", "YES", "NO"),
+    "eu": ("SUPPORT_D16_EU_ONLY", "YES", "NO"),
+    "multimodule": ("MULTIMODULE", "YES", "NO"),
+    "stdr9m": ("MODULE_R9M_FULLSIZE", "YES", None),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
 }
 
 options_taranisx9e = {
@@ -273,7 +291,6 @@ options_taranisx9e = {
     "luac": ("LUA_COMPILER", "YES", "NO"),
     "nogvars": ("GVARS", "NO", "YES"),
     "sqt5font": ("FONT", "SQT5", None),
-    "noras": ("RAS", "NO", "YES"),
     "faimode": ("FAI", "YES", None),
     "faichoice": ("FAI", "CHOICE", None),
     "nooverridech": ("OVERRIDE_CHANNEL_FUNCTION", "NO", "YES"),
@@ -281,7 +298,8 @@ options_taranisx9e = {
     "shutdownconfirm": ("SHUTDOWN_CONFIRMATION", "YES", "NO"),
     "eu": ("SUPPORT_D16_EU_ONLY", "YES", "NO"),
     "horussticks": ("STICKS", "HORUS", "STANDARD"),
-    "multimodule": ("MULTIMODULE", "YES", "NO")
+    "multimodule": ("MULTIMODULE", "YES", "NO"),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
 }
 
 options_x12s = {
@@ -295,7 +313,8 @@ options_x12s = {
     "nooverridech": ("OVERRIDE_CHANNEL_FUNCTION", "NO", "YES"),
     "eu": ("SUPPORT_D16_EU_ONLY", "YES", "NO"),
     "multimodule": ("MULTIMODULE", "YES", "NO"),
-    "pcbdev": ("PCBREV", "10", None)
+    "pcbdev": ("PCBREV", "10", None),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
 }
 
 options_x10 = {
@@ -308,5 +327,6 @@ options_x10 = {
     "faichoice": ("FAI", "CHOICE", None),
     "nooverridech": ("OVERRIDE_CHANNEL_FUNCTION", "NO", "YES"),
     "eu": ("SUPPORT_D16_EU_ONLY", "YES", "NO"),
-    "multimodule": ("MULTIMODULE", "YES", "NO")
+    "multimodule": ("MULTIMODULE", "YES", "NO"),
+    "flexr9m": ("MODULE_R9M_FLEX_FW", "YES", None)
 }

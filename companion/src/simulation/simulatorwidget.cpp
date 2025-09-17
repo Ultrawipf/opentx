@@ -69,20 +69,23 @@ SimulatorWidget::SimulatorWidget(QWidget * parent, SimulatorInterface * simulato
   setWindowTitle(windowName);
 
   switch(m_board) {
-    case Board::BOARD_TARANIS_X7 :
+    case Board::BOARD_TARANIS_X7:
       radioUiWidget = new SimulatedUIWidgetX7(simulator, this);
       break;
-    case Board::BOARD_TARANIS_X9D  :
-    case Board::BOARD_TARANIS_X9DP :
+    case Board::BOARD_TARANIS_X9D:
+    case Board::BOARD_TARANIS_X9DP:
       radioUiWidget = new SimulatedUIWidgetX9(simulator, this);
       break;
-    case Board::BOARD_TARANIS_X9E :
+    case Board::BOARD_TARANIS_XLITE:
+      radioUiWidget = new SimulatedUIWidgetXLITE(simulator, this);
+      break;
+    case Board::BOARD_TARANIS_X9E:
       radioUiWidget = new SimulatedUIWidgetX9E(simulator, this);
       break;
-    case Board::BOARD_X12S :
+    case Board::BOARD_X12S:
       radioUiWidget = new SimulatedUIWidgetX12(simulator, this);
       break;
-    case Board::BOARD_X10 :
+    case Board::BOARD_X10:
       radioUiWidget = new SimulatedUIWidgetX10(simulator, this);
       break;
     default:
@@ -105,7 +108,7 @@ SimulatorWidget::SimulatorWidget(QWidget * parent, SimulatorInterface * simulato
   vJoyLeft = new VirtualJoystickWidget(this, 'L');
   ui->leftStickLayout->addWidget(vJoyLeft);
 
-  vJoyRight = new VirtualJoystickWidget(this, 'R');
+  vJoyRight = new VirtualJoystickWidget(this, 'R', (m_board == Board::BOARD_TARANIS_XLITE ? false : true));  // TODO: maybe remove trims for both joysticks and add a cross in the middle?
   ui->rightStickLayout->addWidget(vJoyRight);
 
   connect(vJoyLeft, &VirtualJoystickWidget::valueChange, this, &SimulatorWidget::onRadioWidgetValueChange);
@@ -684,9 +687,7 @@ void SimulatorWidget::restoreRadioWidgetsState()
   emit stickModeChange(radioSettings.stickMode);
 
   // TODO : custom voltages
-  qint16 volts = radioSettings.vBatWarn + 2;
-  if (firmware->getCapability(Capability::HasBatMeterRange))
-    volts = (radioSettings.vBatMin + 90) + ((radioSettings.vBatMax + 30) - radioSettings.vBatMin) / 2;
+  qint16 volts = radioSettings.vBatWarn + 20; // 1V above min
   emit inputValueChange(SimulatorInterface::INPUT_SRC_TXVIN, 0, volts);
 }
 

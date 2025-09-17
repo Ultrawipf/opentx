@@ -60,7 +60,7 @@ const uint16_t CRCTable[]=
   0x7bc7,0x6a4e,0x58d5,0x495c,0x3de3,0x2c6a,0x1ef1,0x0f78
 };
 
-#if defined(INTMODULE_USART)
+#if defined(INTMODULE_USART) || defined(EXTMODULE_USART)
 inline void uartPutPcmPart(uint8_t port, uint8_t byte)
 {
   if (0x7E == byte) {
@@ -85,6 +85,10 @@ void uartPutPcmByte(uint8_t port, uint8_t byte)
 void uartInitPcmArray(uint8_t port)
 {
   modulePulsesData[port].pxx_uart.ptr = modulePulsesData[port].pxx_uart.pulses;
+}
+
+void uartInitPcmCrc(uint8_t port)
+{
   modulePulsesData[port].pxx_uart.pcmCrc = 0;
 }
 
@@ -101,6 +105,8 @@ void uartPutPcmCrc(uint8_t port)
   uartPutPcmByte(port, pulseValue);
 }
 #endif
+
+#if !defined(INTMODULE_USART) || !defined(EXTMODULE_USART)
 
 #if defined(PPM_PIN_SERIAL)
 void pxxPutPcmSerialBit(uint8_t port, uint8_t bit)
@@ -159,7 +165,6 @@ void pxxPutPcmBit(uint8_t port, uint8_t bit)
     pxxPutPcmPart(port, 0);
     modulePulsesData[port].pxx.pcmOnesCount = 0;
   }
-
 }
 
 void pxxPutPcmByte(uint8_t port, uint8_t byte)
@@ -177,10 +182,15 @@ void pxxInitPcmArray(uint8_t port)
 #if defined(PPM_PIN_SERIAL)
   modulePulsesData[port].pxx.pcmValue = 0;
 #else
-  modulePulsesData[port].pxx.rest = 18000;
+  modulePulsesData[port].pxx.rest = PXX_PERIOD_HALF_US;
 #endif
-  modulePulsesData[port].pxx.pcmCrc = 0;
+
   modulePulsesData[port].pxx.pcmOnesCount = 0;
+}
+
+void pxxInitPcmCrc(uint8_t port)
+{
+  modulePulsesData[port].pxx.pcmCrc = 0;
 }
 
 void pxxPutPcmHead(uint8_t port)
@@ -203,14 +213,31 @@ void pxxPutPcmCrc(uint8_t port)
   pxxPutPcmByte(port, pulseValue >> 8);
   pxxPutPcmByte(port, pulseValue);
 }
+#else
+  // those functions should not be used, a link error will occur if wrong
+  void pxxInitPcmArray(uint8_t port);
+  void pxxInitPcmCrc(uint8_t port);
+  void pxxPutPcmByte(uint8_t port, uint8_t byte);
+  void pxxPutPcmHead(uint8_t port);
+  void pxxPutPcmTail(uint8_t port);
+  void pxxPutPcmCrc(uint8_t port);
+#endif
 
-#if defined(INTMODULE_USART)
+#if defined(INTMODULE_USART) || defined(EXTMODULE_USART)
 inline void initPcmArray(uint8_t port)
 {
   if (IS_UART_MODULE(port))
     uartInitPcmArray(port);
   else
     pxxInitPcmArray(port);
+}
+
+inline void initPcmCrc(uint8_t port)
+{
+  if (IS_UART_MODULE(port))
+    uartInitPcmCrc(port);
+  else
+    pxxInitPcmCrc(port);
 }
 
 inline void putPcmHead(uint8_t port)
@@ -248,6 +275,11 @@ inline void initPcmArray(uint8_t port)
   pxxInitPcmArray(port);
 }
 
+inline void initPcmCrc(uint8_t port)
+{
+  pxxInitPcmCrc(port);
+}
+
 inline void putPcmHead(uint8_t port)
 {
   pxxPutPcmHead(port);
@@ -269,11 +301,11 @@ inline void putPcmTail(uint8_t port)
 }
 #endif
 
-void setupPulsesPXX(uint8_t port)
+inline void setupFramePXX(uint8_t port, uint8_t sendUpperChannels)
 {
   uint16_t pulseValue=0, pulseValueLow=0;
 
-  initPcmArray(port);
+  initPcmCrc(port);
 
   /* Sync */
   putPcmHead(port);
@@ -304,12 +336,7 @@ void setupPulsesPXX(uint8_t port)
   /* FLAG2 */
   putPcmByte(port, 0);
 
-  /* PPM */
-  static uint8_t pass[NUM_MODULES] = { MODULES_INIT(0) };
-  int sendUpperChannels = 0;
-  if (pass[port]++ & 0x01) {
-    sendUpperChannels = g_model.moduleData[port].channelsCount;
-  }
+  /* CHANNELS */
   for (int i=0; i<8; i++) {
     if (flag1 & PXX_SEND_FAILSAFE) {
       if (g_model.moduleData[port].failsafeMode == FAILSAFE_HOLD) {
@@ -382,17 +409,17 @@ void setupPulsesPXX(uint8_t port)
   }
 #endif
 
-  // Bit1 is ignored by R9M EU when power is set to 1500 mW
   extra_flags |= (g_model.moduleData[port].pxx.receiver_telem_off << 1);
-
   extra_flags |= (g_model.moduleData[port].pxx.receiver_channel_9_16 << 2);
   if (IS_MODULE_R9M(port)) {
-    // For R9M EU, bit3 (MODE) is taken into account ONLY at bind time. Value change requires re-bind
-    extra_flags |= (min(g_model.moduleData[port].pxx.power, IS_MODULE_R9M_FCC(port) ? (uint8_t)R9M_FCC_POWER_MAX : (uint8_t)R9M_LBT_POWER_MAX) << 3);
-    // Disable S.PORT if internal module is active
-    if (IS_TELEMETRY_INTERNAL_MODULE()) {
-      extra_flags |= (1 << 5);
-    }
+    extra_flags |= (min(g_model.moduleData[port].pxx.power, IS_MODULE_R9M_FCC_VARIANT(port) ? (uint8_t)R9M_FCC_POWER_MAX : (uint8_t)R9M_LBT_POWER_MAX) << 3);
+    if(IS_MODULE_R9M_EUPLUS(port))
+      extra_flags |= (1 << 6);
+  }
+
+  // Disable S.PORT if internal module is active
+  if (IS_TELEMETRY_INTERNAL_MODULE()) {
+    extra_flags |= (1 << 5);
   }
 
   putPcmByte(port, extra_flags);
@@ -404,4 +431,23 @@ void setupPulsesPXX(uint8_t port)
   putPcmHead(port);
 
   putPcmTail(port);
+}
+
+void setupPulsesPXX(uint8_t port)
+{
+  initPcmArray(port);
+
+#if defined(PXX_FREQUENCY_HIGH)
+  setupFramePXX(port, 0);
+  if (NUM_CHANNELS(port) > 8) {
+    setupFramePXX(port, 8);
+  }
+#else
+  static uint8_t pass[NUM_MODULES] = { MODULES_INIT(0) };
+  uint8_t sendUpperChannels = 0;
+  if (pass[port]++ & 0x01) {
+    sendUpperChannels = g_model.moduleData[port].channelsCount;
+  }
+  setupFramePXX(port, sendUpperChannels);
+#endif
 }

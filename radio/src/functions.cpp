@@ -378,19 +378,8 @@ void evalFunctions()
             break;
 
           case FUNC_SET_FAILSAFE:
-          {
-            unsigned int moduleIndex = CFN_PARAM(cfn);
-            if (moduleIndex < NUM_MODULES) {
-              for (int ch=0; ch<MAX_OUTPUT_CHANNELS; ch++) {
-                if (ch < g_model.moduleData[moduleIndex].channelsStart || ch >= NUM_CHANNELS(moduleIndex) + g_model.moduleData[moduleIndex].channelsStart) {
-                  g_model.moduleData[moduleIndex].failsafeChannels[ch] = 0;
-                }
-                else if (g_model.moduleData[moduleIndex].failsafeChannels[ch] < FAILSAFE_CHANNEL_HOLD) {
-                  g_model.moduleData[moduleIndex].failsafeChannels[ch] = channelOutputs[ch];
-                }
-              }
-            }
-          }
+            setCustomFailsafe(CFN_PARAM(cfn));
+            break;
 
 #if defined(DANGEROUS_MODULE_FUNCTIONS)
           case FUNC_RANGECHECK:
@@ -422,8 +411,8 @@ void evalFunctions()
 #endif
               }
             }
-            else if (CFN_PARAM(cfn) >= MIXSRC_TrimRud && CFN_PARAM(cfn) <= MIXSRC_TrimAil) {
-              trimGvar[CFN_PARAM(cfn)-MIXSRC_TrimRud] = CFN_GVAR_INDEX(cfn);
+            else if (CFN_PARAM(cfn) >= MIXSRC_FIRST_TRIM && CFN_PARAM(cfn) <= MIXSRC_LAST_TRIM) {
+              trimGvar[CFN_PARAM(cfn)-MIXSRC_FIRST_TRIM] = CFN_GVAR_INDEX(cfn);
             }
 #if defined(ROTARY_ENCODERS)
             else if (CFN_PARAM(cfn) >= MIXSRC_REa && CFN_PARAM(cfn) < MIXSRC_TrimRud) {

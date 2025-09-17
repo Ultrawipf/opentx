@@ -28,8 +28,8 @@ if (PCB STREQUAL X10)
   set(TARGET_SRC
     ${TARGET_SRC}
     ../common/arm/stm32/audio_dac_driver.cpp
-    ../common/arm/stm32/analog_adc_driver.cpp
-    ../common/arm/stm32/analog_pwm_driver.cpp
+    ../common/arm/stm32/adc_driver.cpp
+    ../common/arm/stm32/sticks_pwm_driver.cpp
     )
 
   set(BITMAPS_TARGET x10_bitmaps)
@@ -155,7 +155,7 @@ set(STM32LIB_SRC
 if(PYTHONINTERP_FOUND)
   add_custom_target(datacopy
     WORKING_DIRECTORY ${RADIO_DIRECTORY}/src
-    COMMAND ${PYTHON_EXECUTABLE} ${RADIO_DIRECTORY}/util/generate_datacopy.py datastructs.h -DPCBHORUS -DCPUARM -DCOLORLCD -DCPUARM -DBACKUP > storage/datacopy.cpp
+    COMMAND ${PYTHON_EXECUTABLE} ${RADIO_DIRECTORY}/util/generate_datacopy.py datastructs.h -DPCBHORUS -DPCBX10 -DCPUARM -DCOLORLCD -DBACKUP -DVIRTUAL_INPUTS -Itargets/horus > storage/datacopy.cpp
     DEPENDS ${RADIO_DIRECTORY}/src/datastructs.h ${RADIO_DIRECTORY}/util/generate_datacopy.py
   )
 endif()

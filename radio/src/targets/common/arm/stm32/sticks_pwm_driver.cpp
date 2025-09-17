@@ -20,16 +20,11 @@
 
 #include "opentx.h"
 
-#define TIMESAMPLE_COUNT 6
-
-uint8_t analogs_pwm_disabled = 0;
+bool sticks_pwm_disabled = false;
 volatile uint32_t pwm_interrupt_count;
-volatile uint8_t  timer_capture_states[4];
-volatile uint32_t timer_capture_rising_time[4];
-volatile uint32_t timer_capture_values[4][TIMESAMPLE_COUNT];
-volatile uint8_t  timer_capture_indexes[4];
+volatile uint16_t timer_capture_values[NUM_PWMSTICKS];
 
-void analogPwmInit()
+void sticksPwmInit()
 {
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_InitStructure.GPIO_Pin = PWM_GPIOA_PINS;
@@ -57,7 +52,7 @@ void analogPwmInit()
   NVIC_SetPriority(PWM_IRQn, 10);
 }
 
-inline uint32_t TIM_GetCapture(uint8_t n)
+inline uint32_t TIM_GetCapture_Stick(uint8_t n)
 {
   switch (n) {
     case 0:
@@ -98,15 +93,17 @@ inline uint32_t diff_with_16bits_overflow(uint32_t a, uint32_t b)
 
 extern "C" void PWM_IRQHandler(void)
 {
-  for (int i=0; i<4; i++) {
+  static uint8_t  timer_capture_states[NUM_PWMSTICKS];
+  static uint32_t timer_capture_rising_time[NUM_PWMSTICKS];
+
+  for (uint8_t i=0; i<NUM_PWMSTICKS; i++) {
     if (PWM_TIMER->SR & (TIM_DIER_CC1IE << i)) {
-      uint32_t capture = TIM_GetCapture(i);
+      uint32_t capture = TIM_GetCapture_Stick(i);
+      pwm_interrupt_count++; // overflow may happen but we only use this to detect PWM / ADC on radio startup
       if (timer_capture_states[i] != 0) {
         uint32_t value = diff_with_16bits_overflow(timer_capture_rising_time[i], capture);
         if (value < 10000) {
-          pwm_interrupt_count++;
-          timer_capture_values[i][timer_capture_indexes[i]++] = value;
-          timer_capture_indexes[i] %= TIMESAMPLE_COUNT;
+          timer_capture_values[i] = (uint16_t) value;
         }
         TIM_SetPolarityRising(i);
         timer_capture_states[i] = 0;
@@ -121,39 +118,10 @@ extern "C" void PWM_IRQHandler(void)
   }
 }
 
-void analogPwmRead(uint16_t * values)
+void sticksPwmRead(uint16_t * values)
 {
-  uint32_t tmp[4];
-
-  for (int i=0; i<4; i++) {
-    uint32_t mycount = 0;
-    uint32_t mymax = 0;
-    uint32_t mymin = 4095;
-    for (uint32_t j=0; j<TIMESAMPLE_COUNT; j++) {
-      uint32_t value = timer_capture_values[i][j];
-      mycount += value;
-      if (value > mymax)
-        mymax = value;
-      if (value < mymin)
-        mymin = value;
-    }
-    // from the 6 values, remove the min and max and divide by 4
-    tmp[i] = (mycount - mymax - mymin) >> 2;
-  }
-
-  values[0] = tmp[0];
-  values[1] = tmp[1];
-  values[2] = tmp[3];
-  values[3] = tmp[2];
-}
-
-void analogPwmCheck()
-{
-  // I have ~1860 interrupts with only one stick
-  if (pwm_interrupt_count < 1000) {
-    analogs_pwm_disabled = true;
-#if !defined(SIMU)
-    adcInit();
-#endif
-  }
+  values[0] = timer_capture_values[0];
+  values[1] = timer_capture_values[1];
+  values[2] = timer_capture_values[3];
+  values[3] = timer_capture_values[2];
 }

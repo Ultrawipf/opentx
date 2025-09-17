@@ -93,6 +93,23 @@ void TelemetryAnalog::update()
   ui->CalibSB->setValue(mini);
 }
 
+static int findmult(float value, float base)
+{
+  int vvalue = value*10;
+  int vbase = base*10;
+  vvalue--;
+
+  int mult = 0;
+  for (int i=8; i>=0; i--) {
+    if (vvalue/vbase >= (1<<i)) {
+      mult = i+1;
+      break;
+    }
+  }
+
+  return mult;
+}
+
 void TelemetryAnalog::on_UnitCB_currentIndexChanged(int index)
 {
     float ratio = analog.getRatio();
@@ -662,25 +679,29 @@ void TelemetrySensorPanel::update()
     ratioFieldsDisplayed = (sensor.unit < SensorData::UNIT_FIRST_VIRTUAL);
     if (sensor.unit == SensorData::UNIT_RPMS) {
       if (ui->ratio->decimals()) {
+        ui->ratio->setDecimals(0);
         ui->ratio->setMaximum(30000);
         ui->ratio->setMinimum(1);
-        ui->ratio->setDecimals(0);
         ui->ratio->setSingleStep(1);
+        ui->offset->setDecimals(0);
         ui->offset->setMaximum(30000);
         ui->offset->setMinimum(1);
-        ui->offset->setDecimals(0);
         ui->offset->setSingleStep(1);
       }
     }
-    else if (ui->ratio->decimals() != 1) {
-      ui->ratio->setMaximum(3000);
-      ui->ratio->setMinimum(0);
-      ui->ratio->setDecimals(1);
-      ui->ratio->setSingleStep(0.1);
-      ui->offset->setMaximum(30000.0f / powf(10.0f, sensor.prec));
-      ui->offset->setMinimum(-ui->offset->maximum());
-      ui->offset->setDecimals(sensor.prec);
-      ui->offset->setSingleStep(pow(0.1, sensor.prec));
+    else {
+      if (!ui->ratio->decimals()) {
+        ui->ratio->setDecimals(1);
+        ui->ratio->setMaximum(3000);
+        ui->ratio->setMinimum(0);
+        ui->ratio->setSingleStep(0.1);
+      }
+      if (ui->offset->decimals() != (int)sensor.prec) {
+        ui->offset->setDecimals(sensor.prec);
+        ui->offset->setMaximum(30000.0f / powf(10.0f, sensor.prec));
+        ui->offset->setMinimum(-ui->offset->maximum());
+        ui->offset->setSingleStep(pow(0.1, sensor.prec));
+      }
     }
   }
 
@@ -807,6 +828,8 @@ TelemetryPanel::TelemetryPanel(QWidget *parent, ModelData & model, GeneralSettin
   }
 
   if (IS_ARM(firmware->getBoard())) {
+	ui->varioSource->setField(model.frsky.varioSource, this);
+    ui->varioCenterSilent->setField(model.frsky.varioCenterSilent, this);
     ui->A1GB->hide();
     ui->A2GB->hide();
     for (int i=0; i<CPN_MAX_SENSORS; ++i) {
@@ -819,6 +842,7 @@ TelemetryPanel::TelemetryPanel(QWidget *parent, ModelData & model, GeneralSettin
   }
   else {
     ui->sensorsGB->hide();
+	ui->altimetryGB->hide();
     analogs[0] = new TelemetryAnalog(this, model.frsky.channels[0], model, generalSettings, firmware);
     ui->A1Layout->addWidget(analogs[0]);
     connect(analogs[0], SIGNAL(modified()), this, SLOT(onAnalogModified()));
@@ -826,12 +850,10 @@ TelemetryPanel::TelemetryPanel(QWidget *parent, ModelData & model, GeneralSettin
     ui->A2Layout->addWidget(analogs[1]);
     connect(analogs[1], SIGNAL(modified()), this, SLOT(onModified()));
   }
-
-  if (IS_HORUS_OR_TARANIS(firmware->getBoard())) {
+  
+  if (IS_TARANIS_X9(firmware->getBoard())) {
     ui->voltsSource->setField(model.frsky.voltsSource, this);
     ui->altitudeSource->setField(model.frsky.altitudeSource, this);
-    ui->varioSource->setField(model.frsky.varioSource, this);
-    ui->varioCenterSilent->setField(model.frsky.varioCenterSilent, this);
   }
   else {
     ui->topbarGB->hide();

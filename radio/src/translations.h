@@ -220,8 +220,8 @@ extern const pm_char STR_OPEN9X[];
 #endif
 #if defined(CPUARM)
   #define OFS_TARANIS_PROTOCOLS        (OFS_VTRAINERMODES + sizeof(TR_VTRAINERMODES))
-  #define OFS_R9M_MODES                (OFS_TARANIS_PROTOCOLS + sizeof(TR_TARANIS_PROTOCOLS))
-  #define OFS_R9M_FCC_POWER_VALUES     (OFS_R9M_MODES + sizeof(TR_R9M_MODES))
+  #define OFS_R9M_REGION                (OFS_TARANIS_PROTOCOLS + sizeof(TR_TARANIS_PROTOCOLS))
+  #define OFS_R9M_FCC_POWER_VALUES     (OFS_R9M_REGION + sizeof(TR_R9M_REGION))
   #define OFS_R9M_LBT_POWER_VALUES     (OFS_R9M_FCC_POWER_VALUES + sizeof(TR_R9M_FCC_POWER_VALUES))
   #define OFS_TELEMETRY_PROTOCOLS      (OFS_R9M_LBT_POWER_VALUES + sizeof(TR_R9M_LBT_POWER_VALUES))
   #define OFS_XJT_PROTOCOLS            (OFS_TELEMETRY_PROTOCOLS + sizeof(TR_TELEMETRY_PROTOCOLS))
@@ -351,7 +351,7 @@ extern const pm_char STR_OPEN9X[];
 #if defined(CPUARM)
   #define STR_VTRAINERMODES     (STR_OPEN9X + OFS_VTRAINERMODES)
   #define STR_TARANIS_PROTOCOLS (STR_OPEN9X + OFS_TARANIS_PROTOCOLS)
-  #define STR_R9M_MODES         (STR_OPEN9X + OFS_R9M_MODES)
+  #define STR_R9M_REGION         (STR_OPEN9X + OFS_R9M_REGION)
   #define STR_R9M_FCC_POWER_VALUES     (STR_OPEN9X + OFS_R9M_FCC_POWER_VALUES)
   #define STR_R9M_LBT_POWER_VALUES     (STR_OPEN9X + OFS_R9M_LBT_POWER_VALUES)
   #define STR_TELEMETRY_PROTOCOLS      (STR_OPEN9X + OFS_TELEMETRY_PROTOCOLS)
@@ -573,6 +573,7 @@ extern const pm_char STR_BAD_RADIO_DATA[];
 extern const pm_char STR_STORAGE_FORMAT[];
 extern const pm_char STR_EEPROMOVERFLOW[];
 extern const pm_char STR_TRIMS2OFFSETS[];
+extern const pm_char STR_OUTPUTS2FAILSAFE[];
 extern const pm_char STR_MENURADIOSETUP[];
 extern const pm_char STR_MENUDATEANDTIME[];
 extern const pm_char STR_MENUTRAINER[];
@@ -637,6 +638,7 @@ extern const pm_char STR_SUBTYPE[];
 #if defined(DSM2) || defined(PXX)
 extern const pm_char STR_RECEIVER_NUM[];
 extern const pm_char STR_RECEIVER[];
+extern const pm_char STR_REBIND[];
 #endif
 
 #if defined(PXX) || defined(CPUARM)
@@ -828,6 +830,7 @@ extern const pm_char STR_VIEW_TEXT[];
 extern const pm_char STR_FLASH_BOOTLOADER[];
 extern const pm_char STR_FLASH_EXTERNAL_DEVICE[];
 extern const pm_char STR_FLASH_INTERNAL_MODULE[];
+extern const pm_char STR_FLASH_EXTERNAL_MODULE[];
 extern const pm_char STR_FIRMWARE_UPDATE_ERROR[];
 extern const pm_char STR_WRITING[];
 extern const pm_char STR_CONFIRM_FORMAT[];
@@ -849,17 +852,18 @@ extern const pm_char STR_BLCOLOR[];
   extern uint8_t currentLanguagePackIdx;
 
   extern const LanguagePack czLanguagePack;
+  extern const LanguagePack deLanguagePack;
   extern const LanguagePack enLanguagePack;
   extern const LanguagePack esLanguagePack;
   extern const LanguagePack frLanguagePack;
-  extern const LanguagePack deLanguagePack;
+  extern const LanguagePack huLanguagePack;
   extern const LanguagePack itLanguagePack;
+  extern const LanguagePack nlLanguagePack;
   extern const LanguagePack plLanguagePack;
   extern const LanguagePack ptLanguagePack;
-  extern const LanguagePack skLanguagePack;
-  extern const LanguagePack seLanguagePack;
-  extern const LanguagePack huLanguagePack;
   extern const LanguagePack ruLanguagePack;
+  extern const LanguagePack seLanguagePack;
+  extern const LanguagePack skLanguagePack;
   extern const LanguagePack * const languagePacks[];
   #if defined(LANGUAGE_PACKS_DEFINITION)
   const LanguagePack * const languagePacks[] = {
@@ -871,6 +875,7 @@ extern const pm_char STR_BLCOLOR[];
     &frLanguagePack,
     &huLanguagePack,
     &itLanguagePack,
+    &nlLanguagePack,
     &plLanguagePack,
     &ptLanguagePack,
     &ruLanguagePack,
@@ -935,14 +940,12 @@ extern const pm_char STR_BLCOLOR[];
   extern const pm_char STR_BINDING_1_8_TELEM_OFF[];
   extern const pm_char STR_BINDING_9_16_TELEM_ON[];
   extern const pm_char STR_BINDING_9_16_TELEM_OFF[];
-  extern const pm_char STR_BINDING_25MW_CH1_8_TELEM_OFF[];
-  extern const pm_char STR_BINDING_25MW_CH1_8_TELEM_ON[];
-  extern const pm_char STR_BINDING_500MW_CH1_8_TELEM_OFF[];
-  extern const pm_char STR_BINDING_500MW_CH9_16_TELEM_OFF[];
   extern const pm_char STR_CHANNELRANGE[];
   extern const pm_char STR_ANTENNASELECTION[];
   extern const pm_char STR_ANTENNACONFIRM1[];
   extern const pm_char STR_ANTENNACONFIRM2[];
+extern const pm_char STR_R9MFLEXWARN1[];
+extern const pm_char STR_R9MFLEXWARN2[];
   extern const pm_char STR_SET[];
   extern const pm_char STR_PREFLIGHT[];
   extern const pm_char STR_CHECKLIST[];
@@ -996,6 +999,7 @@ extern const pm_char STR_BLCOLOR[];
   extern const pm_char STR_ADDMAINVIEW[];
   extern const pm_char STR_BACKGROUND_COLOR[];
   extern const pm_char STR_MAIN_COLOR[];
+  extern const pm_char STR_TEXT_VIEWER[];
   extern const pm_char STR_MULTI_RFPOWER[];
 #endif
 

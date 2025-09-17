@@ -188,20 +188,6 @@ enum CurveType {
   #define NUM_ROTARY_ENCODERS          0
 #endif
 
-#if defined(PCBX10)
-  #define NUM_TRIMS                    (NUM_STICKS + 2)
-  #define NUM_MOUSE_ANALOGS            2
-  #define NUM_DUMMY_ANAS               2
-#elif defined(PCBHORUS)
-  #define NUM_TRIMS                    (NUM_STICKS + 2)
-  #define NUM_MOUSE_ANALOGS            2
-  #define NUM_DUMMY_ANAS               0
-#else
-  #define NUM_TRIMS                    NUM_STICKS
-  #define NUM_MOUSE_ANALOGS            0
-  #define NUM_DUMMY_ANAS               0
-#endif
-
 #if defined(COLORLCD)
 enum MainViews {
   VIEW_BLANK,
@@ -241,7 +227,8 @@ enum BeeperMode {
   enum ModuleIndex {
     INTERNAL_MODULE,
     EXTERNAL_MODULE,
-    TRAINER_MODULE
+    TRAINER_MODULE,
+    FLASHING_MODULE,
   };
   enum TrainerMode {
     TRAINER_MODE_MASTER_TRAINER_JACK,
@@ -709,7 +696,7 @@ enum MixSources {
 #endif
 
 #if defined(LUA_INPUTS)
-  MIXSRC_FIRST_LUA,
+  MIXSRC_FIRST_LUA,                     LUA_EXPORT_MULTIPLE("lua", "Lua mix output %d", MAX_SCRIPTS*MAX_SCRIPT_OUTPUTS)
   MIXSRC_LAST_LUA = MIXSRC_FIRST_LUA+(MAX_SCRIPTS*MAX_SCRIPT_OUTPUTS)-1,
 #endif
 
@@ -896,7 +883,7 @@ enum MixSources {
   MIXSRC_LAST_TIMER = MIXSRC_TIMER3,
 #endif
 
-  MIXSRC_FIRST_TELEM,
+  MIXSRC_FIRST_TELEM,                       LUA_EXPORT_MULTIPLE("telem", "Telemetry sensor %d", MAX_TELEMETRY_SENSORS)
 #if defined(CPUARM)
   MIXSRC_LAST_TELEM = MIXSRC_FIRST_TELEM+3*MAX_TELEMETRY_SENSORS-1
 #else

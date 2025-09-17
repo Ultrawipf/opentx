@@ -6,7 +6,7 @@ branch=2.2
 docker=nightly22
 workdir=/home/opentx/nightly22
 output=/var/www/html/2.2/nightlies
-version=2.2.2
+version=2.2.4
 
 # Incrementnightly index
 index=`cat index.txt`
@@ -14,6 +14,12 @@ index=`expr $index + 1`
 suffix="N$index"
 
 cd ${workdir}
+
+#make sure there are no leftovers
+rm -f ${workdir}/binaries/*.deb
+rm -f ${output}/companion/linux/companion22_${version}${suffix}_amd64.deb
+rm -f ${output}/companion/windows/companion-windows-${version}${suffix}.exe
+rm -f ${output}/companion/macosx/opentx-companion-${version}${suffix}.dmg
 
 # Create on-demand build environment
 cp code/radio/util/Dockerfile .

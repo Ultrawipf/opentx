@@ -134,14 +134,14 @@ enum MenuRadioHardwareItems {
 #endif
 
 #if defined(PCBTARANIS)
-#define BLUETOOTH_ROWS                 uint8_t(btChipPresent ? 0 : HIDDEN_ROW), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_TELEMETRY ? -1 : HIDDEN_ROW), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : -1), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : -1), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : 0),
+#define BLUETOOTH_ROWS                 uint8_t(IS_BLUETOOTH_CHIP_PRESENT() ? 0 : HIDDEN_ROW), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_TELEMETRY ? -1 : HIDDEN_ROW), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : -1), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : -1), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : 0),
 #elif defined(BLUETOOTH)
 #define BLUETOOTH_ROWS                 0, uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : -1), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : -1), uint8_t(g_eeGeneral.bluetoothMode == BLUETOOTH_OFF ? HIDDEN_ROW : 0),
 #else
 #define BLUETOOTH_ROWS
 #endif
 #if defined(PCBXLITE)
-#define SWITCH_TYPE_MAX(sw)            ((MIXSRC_SC-MIXSRC_FIRST_SWITCH == sw || MIXSRC_SD-MIXSRC_FIRST_SWITCH == sw) ? SWITCH_2POS : SWITCH_3POS)
+#define SWITCH_TYPE_MAX(sw)            (SWITCH_3POS)
 #else
 #define SWITCH_TYPE_MAX(sw)            ((MIXSRC_SF-MIXSRC_FIRST_SWITCH == sw || MIXSRC_SH-MIXSRC_FIRST_SWITCH == sw) ? SWITCH_2POS : SWITCH_3POS)
 #endif
@@ -151,15 +151,21 @@ enum MenuRadioHardwareItems {
 
 void menuRadioHardware(event_t event)
 {
-  MENU(STR_HARDWARE, menuTabGeneral, MENU_RADIO_HARDWARE, HEADER_LINE+ITEM_RADIO_HARDWARE_MAX, { HEADER_LINE_COLUMNS LABEL(Sticks), 0, 0, 0, 0, LABEL(Pots), POTS_ROWS, LABEL(Switches), SWITCHES_ROWS, 0, BLUETOOTH_ROWS 0 });
+  MENU(STR_HARDWARE, menuTabGeneral, MENU_RADIO_HARDWARE, HEADER_LINE+ITEM_RADIO_HARDWARE_MAX, { HEADER_LINE_COLUMNS LABEL(Sticks), 0, 0, 0, 0, LABEL(Pots), POTS_ROWS, LABEL(Switches), SWITCHES_ROWS, 0/*max bauds*/, BLUETOOTH_ROWS 0/*jitter filter*/ });
 
   uint8_t sub = menuVerticalPosition - HEADER_LINE;
+ 
+#if defined(BLUETOOTH)
+  if (g_eeGeneral.bluetoothMode != BLUETOOTH_OFF && !IS_BLUETOOTH_CHIP_PRESENT()) {
+    g_eeGeneral.bluetoothMode = BLUETOOTH_OFF;
+  }
+#endif
 
   for (uint8_t i=0; i<LCD_LINES-1; i++) {
     coord_t y = MENU_HEADER_HEIGHT + 1 + i*FH;
     uint8_t k = i+menuVerticalOffset;
     for (int j=0; j<=k; j++) {
-      if (mstate_tab[j] == HIDDEN_ROW)
+      if (mstate_tab[j+HEADER_LINE] == HIDDEN_ROW)
         k++;
     }
     uint8_t blink = ((s_editMode>0) ? BLINK|INVERS : INVERS);
@@ -231,7 +237,7 @@ void menuRadioHardware(event_t event)
         lcdDrawNumber(HW_SETTINGS_COLUMN2, y, CROSSFIRE_BAUDRATES[g_eeGeneral.telemetryBaudrate], attr|LEFT);
         if (attr) {
           g_eeGeneral.telemetryBaudrate = DIM(CROSSFIRE_BAUDRATES) - 1 - checkIncDecModel(event, DIM(CROSSFIRE_BAUDRATES) - 1 - g_eeGeneral.telemetryBaudrate, 0, DIM(CROSSFIRE_BAUDRATES) - 1);
-          if (checkIncDec_Ret) {
+          if (checkIncDec_Ret && IS_EXTERNAL_MODULE_ON()) {
             pauseMixerCalculations();
             pausePulses();
             EXTERNAL_MODULE_OFF();
@@ -248,9 +254,6 @@ void menuRadioHardware(event_t event)
       case ITEM_RADIO_HARDWARE_BLUETOOTH_MODE:
         lcdDrawTextAlignedLeft(y, STR_BLUETOOTH);
         lcdDrawTextAtIndex(HW_SETTINGS_COLUMN2, y, STR_BLUETOOTH_MODES, g_eeGeneral.bluetoothMode, attr);
-        if ((g_eeGeneral.bluetoothMode != BLUETOOTH_OFF) && !btChipPresent) {
-          g_eeGeneral.bluetoothMode = BLUETOOTH_OFF;
-        }
         if (attr) {
           g_eeGeneral.bluetoothMode = checkIncDecGen(event, g_eeGeneral.bluetoothMode, BLUETOOTH_OFF, BLUETOOTH_TRAINER);
         }
@@ -278,11 +281,8 @@ void menuRadioHardware(event_t event)
 #endif
 
       case ITEM_RADIO_HARDWARE_JITTER_FILTER:
-      {
-        uint8_t b = 1-g_eeGeneral.jitterFilter;
-        g_eeGeneral.jitterFilter = 1 - editCheckBox(b, HW_SETTINGS_COLUMN2, y, STR_JITTER_FILTER, attr, event);
+        g_eeGeneral.jitterFilter = 1 - editCheckBox(1 - g_eeGeneral.jitterFilter, HW_SETTINGS_COLUMN2, y, STR_JITTER_FILTER, attr, event);
         break;
-      }
     }
   }
 }

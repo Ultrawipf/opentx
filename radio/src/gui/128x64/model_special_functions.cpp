@@ -70,7 +70,7 @@ void onCustomFunctionsFileSelectionMenu(const char * result)
 }
 #endif // CPUARM && SDCARD
 
-#if defined(PCBX7)
+#if defined(PCBTARANIS)
 
 void onAdjustGvarSourceLongEnterPress(const char * result)
 {
@@ -103,7 +103,7 @@ void onAdjustGvarSourceLongEnterPress(const char * result)
 
 void onCustomFunctionsMenu(const char * result)
 {
-  int sub = menuVerticalPosition;
+  int sub = menuVerticalPosition - HEADER_LINE;
   CustomFunctionData * cfn;
   uint8_t eeFlags;
 
@@ -139,7 +139,7 @@ void onCustomFunctionsMenu(const char * result)
     storageDirty(eeFlags);
   }
 }
-#endif // CPUARM
+#endif // PCBTARANIS
 
 void menuSpecialFunctions(event_t event, CustomFunctionData * functions, CustomFunctionsContext * functionsContext)
 {
@@ -151,13 +151,19 @@ void menuSpecialFunctions(event_t event, CustomFunctionData * functions, CustomF
   uint8_t eeFlags = EE_MODEL;
 #endif
 
-#if defined(PCBX7)
+#if defined(PCBTARANIS)
+#if defined(PCBXLITE)
+  if (menuHorizontalPosition==0 && event==EVT_KEY_LONG(KEY_ENTER) && !READ_ONLY()) {
+    killEvents(KEY_ENTER);
+    if (IS_SHIFT_PRESSED()) { // ENT LONG on xlite brings up switch type menu, so this menu is activated with SHIT + ENT LONG
+#else
   if (menuHorizontalPosition<0 && event==EVT_KEY_LONG(KEY_ENTER) && !READ_ONLY()) {
+#endif
     killEvents(event);
     CustomFunctionData *cfn = &functions[sub];
     if (!CFN_EMPTY(cfn))
       POPUP_MENU_ADD_ITEM(STR_COPY);
-    if (clipboard.type == CLIPBOARD_TYPE_CUSTOM_FUNCTION)
+    if (clipboard.type == CLIPBOARD_TYPE_CUSTOM_FUNCTION && isAssignableFunctionAvailable(clipboard.data.cfn.func))
       POPUP_MENU_ADD_ITEM(STR_PASTE);
     if (!CFN_EMPTY(cfn) && CFN_EMPTY(&functions[MAX_SPECIAL_FUNCTIONS-1]))
       POPUP_MENU_ADD_ITEM(STR_INSERT);
@@ -171,7 +177,10 @@ void menuSpecialFunctions(event_t event, CustomFunctionData * functions, CustomF
     }
     POPUP_MENU_START(onCustomFunctionsMenu);
   }
-#endif // PCBX7
+#if defined(PCBXLITE)
+  }
+#endif
+#endif // PCBTARANIS
 
   for (uint8_t i=0; i<NUM_BODY_LINES; i++) {
     coord_t y = MENU_HEADER_HEIGHT + 1 + i*FH;
@@ -442,6 +451,7 @@ void menuSpecialFunctions(event_t event, CustomFunctionData * functions, CustomF
               default: // FUNC_ADJUST_GVAR_INC
 #if defined(CPUARM)
                 getMixSrcRange(CFN_GVAR_INDEX(cfn) + MIXSRC_FIRST_GVAR, val_min, val_max);
+                getGVarIncDecRange(val_min, val_max);
                 lcdDrawText(MODEL_SPECIAL_FUNC_3RD_COLUMN, y, (val_displayed < 0 ? "-= " : "+= "), attr);
                 drawGVarValue(lcdNextPos, y, CFN_GVAR_INDEX(cfn), abs(val_displayed), attr|LEFT);
 #else

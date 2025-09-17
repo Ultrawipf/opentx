@@ -149,9 +149,14 @@ void onSdManagerMenu(const char * result)
     getSelectionFullPath(lfn);
     sportFlashDevice(INTERNAL_MODULE, lfn);
   }
-  else if (result == STR_FLASH_EXTERNAL_DEVICE) {
+  else if (result == STR_FLASH_EXTERNAL_MODULE) {
+    // needed on X-Lite (as the R9M needs 2S while the external device flashing port only provides 5V)
     getSelectionFullPath(lfn);
     sportFlashDevice(EXTERNAL_MODULE, lfn);
+  }
+  else if (result == STR_FLASH_EXTERNAL_DEVICE) {
+    getSelectionFullPath(lfn);
+    sportFlashDevice(FLASHING_MODULE, lfn);
   }
 #endif
 #if defined(LUA)
@@ -200,7 +205,7 @@ void menuRadioSdManager(event_t _event)
       menuVerticalOffset = reusableBuffer.sdmanager.offset;
       break;
 
-#if defined(PCBTARANIS)
+#if defined(PCBX9) || defined(PCBX7) // TODO NO_MENU_KEY
     case EVT_KEY_LONG(KEY_MENU):
       if (!READ_ONLY() && s_editMode == 0) {
         killEvents(_event);
@@ -237,7 +242,7 @@ void menuRadioSdManager(event_t _event)
       break;
 
     case EVT_KEY_LONG(KEY_ENTER):
-#if !defined(PCBTARANIS)
+#if !defined(PCBX9) && !defined(PCBX7) // TODO NO_HEADER_LINE
       if (menuVerticalPosition < HEADER_LINE) {
         killEvents(_event);
         POPUP_MENU_ADD_ITEM(STR_SD_INFO);
@@ -283,7 +288,9 @@ void menuRadioSdManager(event_t _event)
             }
           }
           else if (!READ_ONLY() && !strcasecmp(ext, SPORT_FIRMWARE_EXT)) {
-            POPUP_MENU_ADD_ITEM(STR_FLASH_EXTERNAL_DEVICE);
+            if (HAS_SPORT_UPDATE_CONNECTOR())
+              POPUP_MENU_ADD_ITEM(STR_FLASH_EXTERNAL_DEVICE);
+            POPUP_MENU_ADD_ITEM(STR_FLASH_EXTERNAL_MODULE);
             POPUP_MENU_ADD_ITEM(STR_FLASH_INTERNAL_MODULE);
           }
 #endif
@@ -334,9 +341,10 @@ void menuRadioSdManager(event_t _event)
       bool firstTime = true;
       for (;;) {
         res = sdReadDir(&dir, &fno, firstTime);
-        if (res != FR_OK || fno.fname[0] == 0) break;  /* Break on error or end of dir */
+        if (res != FR_OK || fno.fname[0] == 0) break;              /* Break on error or end of dir */
         if (strlen(fno.fname) > SD_SCREEN_FILE_LENGTH) continue;
-        if (fno.fname[0] == '.' && fno.fname[1] != '.') continue;             /* Ignore hidden files under UNIX, but not .. */
+        if (fno.fattrib & AM_HID) continue;                        /* Ignore Windows hidden files */
+        if (fno.fname[0] == '.' && fno.fname[1] != '.') continue;  /* Ignore UNIX hidden files, but not .. */
 
         reusableBuffer.sdmanager.count++;
 

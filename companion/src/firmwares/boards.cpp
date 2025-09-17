@@ -145,7 +145,9 @@ const SwitchInfo Boards::getSwitchInfo(Board::Type board, unsigned index)
   if (IS_TARANIS_XLITE(board)) {
     const Board::SwitchInfo switches[] = {
       {SWITCH_3POS,   "SA"},
-      {SWITCH_3POS,   "SB"}
+      {SWITCH_3POS,   "SB"},
+      {SWITCH_2POS,   "SC"},
+      {SWITCH_2POS,   "SD"}
     };
     if (index < DIM(switches))
       return switches[index];
@@ -252,7 +254,7 @@ const int Boards::getCapability(Board::Type board, Board::Capability capability)
       else if (IS_TARANIS_X7(board))
         return 6;
       else if (IS_TARANIS_XLITE(board))
-        return 2;
+        return 4;
       else if (IS_HORUS_OR_TARANIS(board))
         return 8;
       else
@@ -273,8 +275,6 @@ const int Boards::getCapability(Board::Type board, Board::Capability capability)
     case NumTrims:
       if (IS_HORUS(board))
         return 6;
-      else if (IS_TARANIS_XLITE(board))
-        return 2;
       else
         return 4;
 
@@ -384,8 +384,6 @@ const bool Boards::isBoardCompatible(Type board1, Type board2)
   return (getFourCC(board1) == getFourCC(board2));
 }
 
-/* Currently unused
-
 const QString Boards::getBoardName(Board::Type board)
 {
   switch (board) {
@@ -398,7 +396,9 @@ const QString Boards::getBoardName(Board::Type board)
     case BOARD_MEGA2560:
       return "MEGA2560";
     case BOARD_TARANIS_X7:
-      return "Taranis X7";
+      return "Taranis X7/X7S";
+     case BOARD_TARANIS_XLITE:
+      return "Taranis X-Lite";
     case BOARD_TARANIS_X9D:
       return "Taranis X9D";
     case BOARD_TARANIS_X9DP:
@@ -412,11 +412,10 @@ const QString Boards::getBoardName(Board::Type board)
     case BOARD_AR9X:
       return "AR9X";
     case BOARD_X12S:
-      return "Horus";
+      return "Horus X12S";
     case BOARD_X10:
-      return "X10";
+      return "Horus X10/X10S";
     default:
       return tr("Unknown");
   }
 }
-*/

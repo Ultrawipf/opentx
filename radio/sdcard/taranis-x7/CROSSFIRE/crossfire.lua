@@ -87,20 +87,21 @@ local function run(event)
     return 2
   elseif event == EVT_EXIT_BREAK then
     return 2
-  elseif event == EVT_ROT_LEFT then
+  elseif event == EVT_ROT_LEFT or event == EVT_DOWN_BREAK then
     selectDevice(1)
-  elseif event == EVT_ROT_RIGHT then
+  elseif event == EVT_ROT_RIGHT or event == EVT_UP_BREAK then
     selectDevice(-1)
   end
 
   lcd.clear()
   lcd.drawScreenTitle("CROSSFIRE SETUP", 0, 0)
   if #devices == 0 then
-    lcd.drawText(24, 28, "Waiting for Crossfire devices...")
+    lcd.drawText(36, 24, "Waiting for")
+    lcd.drawText(16, 36, "Crossfire devices...")
   else
     for i=1, #devices do
       local attr = (lineIndex == i and INVERS or 0)
-      if event == EVT_ROT_BREAK and attr == INVERS then
+      if (event == EVT_ROT_BREAK or event == EVT_RIGHT_BREAK) and attr == INVERS then
           crossfireTelemetryPush(0x28, { devices[i].id, 0xEA })
           return "device.lua"
       end

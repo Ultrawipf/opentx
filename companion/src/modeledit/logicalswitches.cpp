@@ -52,6 +52,7 @@ LogicalSwitchesPanel::LogicalSwitchesPanel(QWidget * parent, ModelData & model, 
     label->setProperty("index", i);
     label->setText(RawSwitch(SWITCH_TYPE_VIRTUAL, i+1).toString());
     label->setContextMenuPolicy(Qt::CustomContextMenu);
+    label->setToolTip(tr("Popup menu available"));
     label->setMouseTracking(true);
     label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
     connect(label, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(csw_customContextMenuRequested(QPoint)));
@@ -194,7 +195,7 @@ void LogicalSwitchesPanel::functionChanged()
       model->logicalSw[i].val2 = -129;
     }
   }
-  updateLine(i);
+  update();
   emit modified();
 }
 

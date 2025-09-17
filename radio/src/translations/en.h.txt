@@ -114,7 +114,7 @@
 #define TR_DSM_PROTOCOLS               "LP45""DSM2""DSMX"
 
 #define LEN_MULTI_PROTOCOLS            "\006"
-#define TR_MULTI_PROTOCOLS             "FlySky""Hubsan""FrSky\0""Hisky\0""V2x2\0 ""DSM\0  ""Devo\0 ""YD717\0""KN\0   ""SymaX\0""SLT\0  ""CX10\0 ""CG023\0""Bayang""ESky\0 ""MT99XX""MJXQ\0 ""Shenqi""FY326\0""SFHSS\0""J6 PRO""FQ777\0""Assan\0""Hontai""OLRS\0 ""FS 2A\0""Q2x2\0 ""Walk.\0""Q303\0 ""GW008\0""DM002\0""Cabell""Esky15""H8 3D\0"
+#define TR_MULTI_PROTOCOLS             "FlySky""Hubsan""FrSky\0""Hisky\0""V2x2\0 ""DSM\0  ""Devo\0 ""YD717\0""KN\0   ""SymaX\0""SLT\0  ""CX10\0 ""CG023\0""Bayang""ESky\0 ""MT99XX""MJXq\0 ""Shenqi""FY326\0""SFHSS\0""J6 PRO""FQ777\0""Assan\0""Hontai""OpnLrs""FS 2A\0""Q2x2\0 ""Walk.\0""Q303\0 ""GW008\0""DM002\0""Cabell""Esy150""H8 3D\0""Corona""CFlie\0""Hitec\0""WFly\0 ""Bugs\0 ""BugMin""Traxas""NC1701""E01X\0 ""V911S\0""GD00X\0""V761\0 ""KF606\0""Redpin""Potens"
 
 #define TR_MULTI_CUSTOM                "Custom"
 
@@ -433,10 +433,10 @@
   #define TR_VKEYS                     "Menu\0""Exit\0""Enter""Up\0  ""Down\0""Right""Left\0"
 #elif defined(PCBXLITE)
   #define LEN_VKEYS                    "\005"
-  #define TR_VKEYS                     "Menu\0""Exit\0""Enter""Down\0""Up\0  ""Right""Left\0"
+  #define TR_VKEYS                     "Shift""Exit\0""Enter""Down\0""Up\0  ""Right""Left\0"
 #elif defined(PCBTARANIS)
   #define LEN_VKEYS                    "\005"
-  #define TR_VKEYS                      "Menu\0""Exit\0""Enter""Page\0""Plus\0""Minus"
+  #define TR_VKEYS                     "Menu\0""Exit\0""Enter""Page\0""Plus\0""Minus"
 #else
   #define LEN_VKEYS                    "\005"
   #define TR_VKEYS                     "Menu\0""Exit\0""Down\0""Up\0  ""Right""Left\0"
@@ -502,8 +502,6 @@
 
 #if defined(PCBHORUS)
   #define TR_TRIMS_SWITCHES            "\313Rl""\313Rr""\313Ed""\313Eu""\313Td""\313Tu""\313Al""\313Ar""\3135d""\3135u""\3136d""\3136u"
-#elif defined(PCBXLITE)
-  #define TR_TRIMS_SWITCHES            "tRl""tRr""tEd""tEu"
 #else
   #define TR_TRIMS_SWITCHES            TR("tRl""tRr""tEd""tEu""tTd""tTu""tAl""tAr", "\313Rl""\313Rr""\313Ed""\313Eu""\313Td""\313Tu""\313Al""\313Ar")
 #endif
@@ -815,9 +813,14 @@
 #define TR_MENU_RADIO_ANALOGS          TR("ANALOGS", "ANALOGS TEST")
 #define TR_MENUCALIBRATION             "CALIBRATION"
 #if defined(COLORLCD)
-  #define TR_TRIMS2OFFSETS             "Trims >> Subtrims"
+  #define TR_TRIMS2OFFSETS             "Trims => Subtrims"
 #else
   #define TR_TRIMS2OFFSETS             "\006Trims => Subtrims"
+#endif
+#if defined(COLORLCD)
+  #define TR_OUTPUTS2FAILSAFE          "Outputs => Failsafe"
+#else
+  #define TR_OUTPUTS2FAILSAFE          "\006Outputs => Failsafe"
 #endif
 #define TR_MENUMODELSEL                TR("MODELSEL", "MODEL SELECTION")
 #define TR_MENUSETUP                   TR("SETUP", "MODEL SETUP")
@@ -872,14 +875,11 @@
 #define TR_MODULE_NO_TELEMETRY         TR3("No telemetry", "No MULTI_TELEMETRY", "No MULTI_TELEMETRY detected")
 #define TR_MODULE_WAITFORBIND          "Bind to load protocol"
 #define TR_MODULE_BINDING              TR("Bind...","Binding")
+#define TR_REBIND                      "Rebinding required"
 #define TR_BINDING_CH1_8_TELEM_ON      "Ch1-8 Telem ON"
 #define TR_BINDING_CH1_8_TELEM_OFF     "Ch1-8 Telem OFF"
 #define TR_BINDING_CH9_16_TELEM_ON     "Ch9-16 Telem ON"
 #define TR_BINDING_CH9_16_TELEM_OFF    "Ch9-16 Telem OFF"
-#define TR_BINDING_25MW_CH1_8_TELEM_OFF   TR("25mW Ch1-8 Tel OFF", "25mW Ch1-8 Tel. OFF")
-#define TR_BINDING_25MW_CH1_8_TELEM_ON    TR("25mW Ch1-8 Tel ON", "25mW Ch1-8 Tel. ON")
-#define TR_BINDING_500MW_CH1_8_TELEM_OFF  TR("0.5W Ch1-8 Tel OFF", "500mW Ch1-8 Tel. OFF")
-#define TR_BINDING_500MW_CH9_16_TELEM_OFF TR("0.5W Ch9-16 Tel OFF", "500mW Ch9-16 Tel. OFF")
 #define TR_PROTOCOL_INVALID            TR("Prot. invalid", "Protocol invalid")
 #define TR_MODULE_STATUS               TR(INDENT "Status", INDENT "Module Status")
 #define TR_MODULE_SYNC                 TR(INDENT "Sync", INDENT "Module Sync")
@@ -985,8 +985,11 @@
 #define TR_BLUETOOTH_PIN_CODE          TR(INDENT "PIN code", "PIN code")
 #define TR_BAUDRATE                    "BT Baudrate"
 #define LEN_BLUETOOTH_MODES            "\011"
+#if defined(PCBX9E) && !defined(USEHORUSBT)
+#define TR_BLUETOOTH_MODES             "---\0     ""Enabled\0 "
+#else
 #define TR_BLUETOOTH_MODES             "---\0     ""Telemetry""Trainer\0"
-
+#endif
 #define TR_SD_INFO_TITLE               "SD INFO"
 #define TR_SD_TYPE                     "Type:"
 #define TR_SD_SPEED                    "Speed:"
@@ -1006,8 +1009,9 @@
 #define TR_PATH_TOO_LONG               "Path too long"
 #define TR_VIEW_TEXT                   "View text"
 #define TR_FLASH_BOOTLOADER            "Flash bootLoader"
-#define TR_FLASH_EXTERNAL_DEVICE       TR("Flash ext. device", "Flash external device")
+#define TR_FLASH_EXTERNAL_DEVICE       TR("Flash S.Port", "Flash S.Port device")
 #define TR_FLASH_INTERNAL_MODULE       TR("Flash int. module", "Flash internal module")
+#define TR_FLASH_EXTERNAL_MODULE       TR("Flash ext. module", "Flash external module")
 #define TR_FIRMWARE_UPDATE_ERROR       TR("FW update error", "Firmware update error")
 #define TR_WRITING                     TR3("\14Writing...", "\032Writing...", "Writing...")
 #define TR_CONFIRM_FORMAT              "Confirm Format?"
@@ -1055,7 +1059,11 @@
 #define TR_SET                         BUTTON("Set")
 #define TR_TRAINER                     "Trainer"
 #define TR_ANTENNAPROBLEM              CENTER "TX antenna problem!"
-#define TR_MODELIDUSED                 TR("ID used in:","Receiver ID used in:")
+#if defined(COLORLCD)
+  #define TR_MODELIDUSED               "ID used in:"
+#else
+  #define TR_MODELIDUSED               TR("ID used in:","Receiver ID used in:")
+#endif
 #define TR_MODULE                      INDENT "Module"
 #define TR_TELEMETRY_TYPE              TR("Type", "Telemetry type")
 #define TR_TELEMETRY_SENSORS           "Sensors"
@@ -1067,6 +1075,8 @@
 #define TR_ANTENNASELECTION            TR(INDENT "Antenna", TR(INDENT "Antenna", INDENT "Antenna selection"))
 #define TR_ANTENNACONFIRM1             "Really switch?"
 #define TR_ANTENNACONFIRM2             TR("Check antenna", "Make sure antenna is installed!")
+#define TR_R9MFLEXWARN1                "Requires non"
+#define TR_R9MFLEXWARN2                "certified R9M firm."
 #define TR_LOWALARM                    INDENT "Low alarm"
 #define TR_CRITICALALARM               INDENT "Critical alarm"
 #define TR_RSSIALARM_WARN              "RSSI"
@@ -1104,6 +1114,9 @@
 #if defined(COLORLCD)
 #define TR_EEBACKUP                    "EEPROM backup"
 #define TR_FACTORYRESET                "Factory reset"
+#elif defined(PCBXLITE)
+#define TR_EEBACKUP                    "\001[ENT. Long]: Backup"
+#define TR_FACTORYRESET                "\001[\300ENT. Long]: Fact. reset"
 #else
 #define TR_EEBACKUP                    TR("\001[ENTER Long]: Backup", "\012[ENTER Long]: EEPROM backup")
 #define TR_FACTORYRESET                TR("\001[MENU Long]: Fact. reset", "\012[MENU Long]: Factory reset")
@@ -1286,6 +1299,7 @@
 #define TR_ADDMAINVIEW                 "Add main view"
 #define TR_BACKGROUND_COLOR            "Background color"
 #define TR_MAIN_COLOR                  "Main color"
+#define TR_TEXT_VIEWER                 "Text Viever"
 
 #define TR_MENU_INPUTS                 "\314Inputs"
 #define TR_MENU_LUA                    "\322Lua scripts"
@@ -1384,3 +1398,9 @@
 #define ZSTR_GASSUIT_RPM               "GRPM"
 #define ZSTR_GASSUIT_FLOW              "GFlo"
 #define ZSTR_GASSUIT_CONS              "GFue"
+#define ZSTR_GASSUIT_RES_VOL           "GRVl"
+#define ZSTR_GASSUIT_RES_PERC          "GRPc"
+#define ZSTR_GASSUIT_MAX_FLOW          "GMFl"
+#define ZSTR_GASSUIT_AVG_FLOW          "GAFl"
+#define ZSTR_SBEC_VOLTAGE              "BecV"
+#define ZSTR_SBEC_CURRENT              "BecA"
